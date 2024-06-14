@@ -139,7 +139,7 @@ The advent of digital technology has led to an exponential increase in the gener
 Differential Privacy (DP) \cite{dwork2006differential}, known for its strong mathematical privacy guarantees, presents a viable solution to these challenges. However, applying DP in NLP is fraught with difficulties due to the complex nature of textual data %which often compromises between maintaining data utility and ensuring privacy, 
 \cite{song2020information}.
 
-Existing implementations of DP in NLP typically degrade semantic integrity and text usability, posing significant challenges for applications requiring high-quality, coherent data processing. This underscores the need for advanced methods capable of finely balancing privacy with utility \cite{lyu2020towards,anil2021large,dupuy2022efficient, li2018towards,mireshghallah2021privacy}. 
+Existing implementations of DP in NLP typically degrade semantic integrity and readability for humans, posing significant challenges for applications requiring high-quality, coherent text processing. This underscores the need for advanced methods capable of finely balancing privacy with utility \cite{lyu2020towards,anil2021large,dupuy2022efficient, li2018towards,mireshghallah2021privacy}. 
 Current state-of-the-art (SOTA) techniques, such as SanText \cite{yue2021differential} and CusText \cite{chen2023customized}, illustrate these challenges. SanText, while focused on maximizing privacy, may significantly diminish the utility of sanitized text. Conversely, CusText can preserve better text utility  but can only achieve privacy in a limited manner. 
 %We briefly describe both below.
 
@@ -159,12 +159,13 @@ In response, CusText proposed to first cluster tokens based on their similarity.
 Though improving utility, this approach also limits CusText's privacy guarantees to within each cluster.
 
 
-To reconcile this conflict between privacy and utility in the SOTA, we  introduce \clusant,\footnote{\clusant: \textbf{Clus}ter-based \textbf{San}itization of \textbf{T}ext.} a novel framework for text sanitization consisting of three components: (1) token clustering, (2) cluster embedding, and (3) token sanitization. Following  SOTA approaches, \clusant performs text sanitization by treating a text as a list of tokens, replacing sensitive ones in a privacy (MLDP)-preserving manner.  %then going through this list, either replacing it if the token is deemed {\em sensitive}, or otherwise leaving the token alone. 
+{\em How can we reconcile this conflict between privacy and utility in the SOTA?} We answer this question by introducing \clusant,\footnote{\clusant: \textbf{Clus}ter-based \textbf{San}itization of \textbf{T}ext.} a novel framework for text sanitization consisting of three components: (1) token clustering, (2) cluster embedding, and (3) token sanitization. \clusant  allows its users to tune their desired privacy/utility tradeoff based on how likely the sanitized token is chosen from a more optimal cluster. Independent of the framework, we also propose several improvements and evaluation metrics that can also augment the SOTA. 
+%Following  SOTA approaches, \clusant performs text sanitization by treating a text as a list of tokens, replacing sensitive ones in a privacy (MLDP)-preserving manner.  %then going through this list, either replacing it if the token is deemed {\em sensitive}, or otherwise leaving the token alone. 
 % The resulting sanitized text is thus the original text, with the sensitive words replaced (in the case of \clusant, via a (LDP) mechanism which we will call a {\em token sanitization} algorithm). 
-While \clusant's token sanitization algorithm relies on the set of tokens being clustered according to their similarity, we emphasize that a notable feature of interest in \clusant is that the privacy guarantees of our token sanitization are {\em agnostic} to the clustering algorithm. 
-Thus, the framework allows for flexible plug-and-play of different clusterings.
+Notably, while \clusant's token sanitization algorithm is based on various parameters, %set of tokens being clustered according to their similarity, a notable feature of interest in \clusant is that
+our token sanitization achieves MLDP guarantees regardless of the chosen parameters, allowing for flexible plug-and-play. 
 % ---determining the best clustering for a specific application is an interesting future direction.  
-The general approach of \clusant is outlined through the following list of technical challenges that we address.
+We outline our general approach through the following main technical challenges.
 
 
 \subsection{Technical Challenges}
@@ -174,17 +175,14 @@ We summarize challenges in the SOTA,  along with our proposed solutions:
 \setlength\itemsep{0em}
     \item \textbf{SanText:} %The application of sanitization uniformly across all tokens often results in a disproportionately
     There is a high probability density over less desirable tokens. \\
-    \textbf{Our Strategy:} \clusant  clusters tokens in a semantically meaningful manner, then select the optimal cluster 
-    %(thus a more optimal replacement token) 
-    with high probability.  
-    Performing replacements within these smaller, relevant subsets of tokens, enhances the likelihood of selecting semantically appropriate replacements, thereby improving utility.
+    \textbf{Our Strategy:} Given tokens clustered in a semantically meaningful manner, \clusant's token sanitization mechanism selects the optimal cluster with high probability, then performs replacements within the smaller, relevant cluster of tokens. This enhances the likelihood of selecting semantically appropriate replacements, thereby improving utility.
     %We employ a clustering mechanism, to ensure that the selection of words is confined predominantly to the desired cluster, thereby reducing the likelihood of choosing suboptimal tokens.
 
     \item \textbf{CusText:} 
     %The utility of CusText depends on its requirement that the sanitized token is from the same cluster as the original token. 
     CusText's approach {\em cannot} achieve standard MLDP (Theorem~\ref{custext_priv}). \\
     \textbf{Our Strategy:} 
-    We introduce a cluster embedding method and an MLDP mechanism that selects a cluster based on this embedding. By parametrizing the cluster embedding, we can tune the probability of selecting the optimal cluster, fitting different application scenarios.
+    We introduce a cluster embedding, and an MLDP mechanism that selects a cluster based on this embedding. Parametrizing the cluster embedding allows one to tune the probability of selecting the optimal cluster, adapting to various application scenarios.
     % and the achieved MLDP guarantees.
     %within our cluster embedding controls the distance between clusters, affecting how likely we are to choose incorrect clusters.
     % Our approach introduces a metric LDP mechanism to select clusters based on a parametrized cluster embedding we devise. This method introduces a (small) probability of selecting an ``incorrect'' cluster. Parameter $k$ within our cluster embedding controls the distance between clusters, thus affecting how likely we are to choose incorrect clusters.
@@ -225,15 +223,15 @@ We summarize challenges in the SOTA,  along with our proposed solutions:
 \noindent
 \textbf{General Framework for Text Sanitization with Parametrizable Privacy. }  
     We introduce \clusant, a framework for MLDP text sanitization, which can be parametrized by: (1) a clustering of tokens of interest and (2) $k:$ amplification factor which controls cluster embedding. 
-    Our framework's flexibility allows it to define a whole {\em spectrum} of MLDP algorithms to adapt to various text sanitization needs. 
-    We demonstrate how SanText and CusText are special (extremal) cases within this spectrum of \clusant's MLDP framework.
+    Our framework's flexibility allows its users to choose from a whole {\em spectrum} of MLDP algorithms to adapt to various text sanitization needs. 
+    We demonstrate how SanText and CusText (SOTA) are special (extremal) cases within this spectrum of the \clusant framework.
     % by adjusting parameters to match different algorithms. 
     % SanText can be described as a special case of \clusant's MLDP algorithm where each cluster contains a single token and uses a metric distance, while CusText employs the same clustering and distance with $k \rightarrow \infty$, effectively selecting the original token's cluster every time.
 
 \vspace{0.5em}
 \noindent
 \textbf{Improved Sensitive Token Set, Utility Metrics, and Extensive Experiments.} 
-Independent of our MLDP framework, we made improvements that can also be applied to the SOTA. In particular, we augment the set of sensitive tokens, improve token embeddings, and utilize more direct metrics and datasets to assess semantic similarity and coherence of sanitized text, providing an accurate reflection of text quality and usability. 
+Independent of our MLDP framework, we made improvements that can also be applied to the SOTA. In particular, we augment the set of sensitive tokens, improve embeddings for multi-word tokens, and utilize more direct metrics and datasets to assess semantic similarity and coherence of sanitized text, providing an accurate reflection of text quality and usability. 
 We apply these improvements to extensively demonstrate the effect of different \clusant parametrizations on the tradeoff between  utility and privacy, through utility improvement over the base case (\clusant parametrized to emulate SanText). We show that under many parametrizations  we can closely match CusText in performance, while still maintaining MLDP guarantees.
     
     % \item \textbf{Development of New Utility Metrics:} We propose new metrics developed with the aid of LLMs to assess semantic similarity and coherence of sanitized text. These metrics are designed to provide a more accurate reflection of text quality, and its usability in specific contexts.
@@ -586,7 +584,7 @@ We introduced \clusant, a novel framework for text sanitization that achieves me
 \clusant comprises token clustering and token sanitization, leveraging Large Language Models to generate substitute tokens, which are then clustered, and sanitized using a MLDP algorithm.
 Our MLDP framework encompasses, and gives a range of privacy-utility tradeoffs via tuneable parameters,  between state-of-the-art algorithms  SanText and CusText. % under specific parameters, balancing the privacy-utility tradeoff. 
 This enables \clusant's users to achieve strong privacy or high utility as required. 
-Our framework's privacy guarantees are agnostic to the clustering algorithm, allowing for plug-and-play (and future optimization) of %privacy guarantees are independent of the clustering method, allowing 
+Our framework achieves MLDP guarantees regardless of the clustering, allowing for plug-and-play (and future optimization) of %privacy guarantees are independent of the clustering method, allowing 
 this component in our framework. 
 %Future work can optimize these algorithms to enhance \clusant's performance further. 
 In summary, \clusant advances the area of privacy-preserving text processing, 
@@ -605,7 +603,7 @@ offering a robust, tuneable solution for handling sensitive text. % across diver
 % To rigorously benchmark \clusant, we used evaluation metrics that focus on semantic similarity and language naturalness. 
 % Our experimental results demonstrate that \clusant offers a sensible balance between privacy and utility.
 
-% We emphasize that the privacy guarantees of our token sanitization algorithm are agnostic to the clustering algorithm, allowing for flexible plug-and-play of different clustering methods. Future work may explore optimizing clustering algorithms to further enhance \clusant's performance in various application domains. Overall, we believe \clusant represents a significant advancement in the field of privacy-preserving text processing, offering a promising solution for handling sensitive data across diverse textual contexts.
+% We emphasize that the privacy guarantees of our token sanitization algorithm are regardless of the clustering algorithm, allowing for flexible plug-and-play of different clustering methods. Future work may explore optimizing clustering algorithms to further enhance \clusant's performance in various application domains. Overall, we believe \clusant represents a significant advancement in the field of privacy-preserving text processing, offering a promising solution for handling sensitive data across diverse textual contexts.
 
 
 

@@ -32,7 +32,7 @@ We describe CusText's token sanitization algorithm $M:X'\rightarrow X$ for input
     \item Using the above utility function, replace $x$ with some token in $C$ via the exponential mechanism (Def.~\ref{def:expmech}) for privacy $\epsilon$.
 \end{enumerate}
 
-We present the proof that CusText cannot achieve (M)LDP when there is more than one cluster.
+We present the proof that CusText cannot achieve standard (M)LDP when there is more than one cluster.
 \begin{proof}
     We prove first for LDP.  Suppose for contradiction that there exists $\epsilon\in \mathbb{R}$ such that $M$ satisfies $\epsilon$-LDP. Then for all $x, x' \in X', y \in X$, this inequality must hold: 
     $$

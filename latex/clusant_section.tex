@@ -172,10 +172,12 @@ Cluster Embedding $f'$:
 \subsection{Token Sanitization Mechanism for Metric LDP Guarantees}\label{sec:clusant_mldp_mech}
 
 
-The main observation behind \clusant's token sanitization mechanism is the following: CusText achieves good utility since it ensures that a token $x$ is replaced only by another (possibly the same) token $x' \in C_x$, the cluster which $x$ is in. However, by Thm.~\ref{custext_priv} we showed that this approach makes it impossible to achieve MLDP. Instead, \clusant gives a (small) probability of choosing the `wrong' cluster---in fact, we can also use the exponential mechanism to choose the cluster from which we find $y$. 
-We show our mechanism in Fig.~\ref{fig:clusant_metricldp}.
+The main observation behind \clusant's token sanitization mechanism is the following: CusText achieves good utility since it ensures that a token $x$ is replaced only by another (possibly the same) token $x' \in C_x$, the cluster which $x$ is in. However, by Thm.~\ref{custext_priv} we showed that this approach is impossible to achieve MLDP. Instead, \clusant achieves privacy (and still good utility) by giving a {\em small} probability of selecting `less good' clusters. 
+%---in fact, we also make use of the modified) exponential mechanism to choose the cluster from which we find $y$. 
+
+Our mechanism is in Fig.~\ref{fig:clusant_metricldp}. Intuitively, Step 1  (cluster selection) is MLDP following the exponential mechanism-style approach of SanText. Then, Step 2 (selecting within a cluster) achieves guarantees similar to CusText. Parametrizing Steps 1 and 2 via the clustering, cluster embedding ($k$), and distances $d, d_c$, gives us a spectrum of $\epsilon$-MLDP mechanisms that include SanText and CusText. 
 %
-By ensuring that the distance function $d_c$ used to choose a cluster (in Step (1) of the mechanism) is a metric (plus a couple more properties), we can show that $M$ in Fig.~\ref{fig:clusant_metricldp} achieves $\epsilon$-MLDP.
+%By ensuring that the distance function $d_c$ used to choose a cluster (in Step (1) of the mechanism) is a metric (plus a couple more properties), we can show that $M$ in Fig.~\ref{fig:clusant_metricldp} achieves $\epsilon$-MLDP.
 % , even when replacing the sensitivity of $d_c$ with $1$. 
 % This intuitively improves utility since sensitivity is generally $> 1$ for the token representations considered. We show through experiments the utility improvements in Sec.~\ref{sec:experiments}.
 
@@ -206,7 +208,7 @@ $M(x)$:
     \item Choose token within chosen cluster~$C$:
     % \begin{itemize}
     %     \item 
-        Run  exponential mechanism $M_E(x)$ parametrised by $\epsilon_E = \epsilon/2$, where the input space is $X'$ (all tokens) with the token embedding $f$, the output space is $C$ (tokens in cluster $C$), utility $u$ is $u(x, x') = -d(x, x')$, and $\Delta u = \max_{x, x', y\in X'} |d(x, y) - d(x', y)|$
+        Run  exponential mechanism $M_E(x)$ parametrised by $\epsilon_E = \epsilon/2$, where the input space is $X'$ (all tokens) with the token embedding $f$, the output space is $C\cap Y$ ($Y$ tokens in cluster $C$), utility $u$ is $u(x, x') = -d(x, x')$, and $\Delta u = \max_{x, x', y\in X'} |d(x, y) - d(x', y)|$
     % \end{itemize}
     \item Output the token chosen above.
 \end{enumerate}
@@ -218,7 +220,7 @@ $M(x)$:
 
 %In the following theorem, we state the requirements on the distance function $d_c$ chosen in order for $M$ in Fig.~\ref{fig:clusant_metricldp} to satisfy $\epsilon$-MLDP.
 
-We formalize our privacy statement below.
+%We formalize our privacy statement below.
 
 \begin{theorem}\label{thm:clusant_mldp}
     Suppose $d_c$ and $k$ are chosen so that: 
