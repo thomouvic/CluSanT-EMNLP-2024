@@ -1,11 +1,11 @@
 
 \section{\clusant: Cluster Exponential Mechanism with MLDP Guarantees}
 
-\clusant first clusters tokens based on their similarity. It then sanitizes sensitive tokens by first selecting a cluster, then selecting the replacement token from within that cluster. This approach makes contextually relevant replacements, improving the utility of sanitized text. Additionally, \clusant's privacy guarantees are independent of the clustering algorithm, allowing for flexible integration of different clustering methods.
+\clusant first clusters tokens based on their similarity. It then sanitizes sensitive tokens by first selecting a cluster, then selecting the replacement token from within that cluster. This approach makes contextually relevant replacements, improving the utility of sanitized text over SanText while still maintaining MLDP. \clusant's privacy guarantees hold for any clustering, allowing for flexible integration of different clustering methods.
 
 In this section, we present two of the components in our \clusant framework: cluster embedding (Sec.~\ref{sec:token_embedding}) and token sanitization (Sec.~\ref{sec:clusant_mldp_mech}). The method of obtaining a token clustering  is independent of this section and will be detailed in our experiments (see Sec. \ref{sec:experiments}). 
-Through parameterizing our cluster embedding with a parameter $k$, we obtain a spectrum of token sanitization mechanisms that range from SanText at one extreme ($k = 1$) and CusText at the other extreme ($k \rightarrow \infty$).
-%(Sec.~\ref{sec:prev_work_wrt_clusant})
+Through parameterizing our clustering, and cluster embedding with a parameter $k$, we obtain a spectrum of token sanitization mechanisms that range from SanText at one extreme and CusText at the other extreme 
+(see Sec.~\ref{sec:prev_work_wrt_clusant}).
 For now, we assume we already have a set of token clusters $\{C\}$. 
 % In Sec.~\ref{}, we show two versions of our token sanitization algorithm, one for LDP and one for metric LDP. Our token sanitization mechanism can be parameterized by a variety of distance functions between tokens, and by any clustering method. This makes flexibility one of \clusant framework's notable features. We will prove the LDP and metric LDP guarantees for any valid parameterization.  
 % We give an example of a set of valid parameters, and our clustering algorithm to Sec.~\ref{}.
@@ -42,10 +42,11 @@ For now, we assume we already have a set of token clusters $\{C\}$.
 \looseness=-1
 We first define a cluster embedding given a token embedding and a clustering. Recall, a token embedding $f$ is a mapping from a token to a real vector. A cluster embedding $f'$, on the other hand, maps a cluster to a real vector. Our cluster embedding is parameterized by ~\( k \geq 1 \).
 
-Intuitively, we begin with a standard token embedding. Then, given a token clustering, we define the cluster embedding via parameter \( k \),  which intuitively allows us to tune how `far' the clusters are from each other; the larger \( k \) is, the further apart the different clusters of tokens are in the cluster embedding. We define our cluster embedding algorithm formally in Fig.~\ref{fig:token_embedding}.
 
-Specifically, we define the cluster embedding \( f' \) which is based on the original token embedding \( f \) and the cluster centroids. 
-More formally, the cluster embedding \( f' \) applies to both token vectors and centroid vectors. Essentially, it stretches a cluster centroid by a factor of \( k \) and adds the vector difference \( (x - C_x) \) to the stretched vector for \( C_x \) to obtain the new vector for a token vector \( x \).
+Our cluster embedding $f'$ (Fig.~\ref{fig:token_embedding}) is parametrized by a standard token embedding $f$, a clustering, and \( k \), which intuitively tunes how `pushed apart' the clusters are from each other; the larger \( k \) is, the more pushed apart the different clusters of tokens are. 
+
+Specifically, our cluster embedding  %\( f' \) is based on a given original token embedding \( f \) and clustering. 
+ \( f' \) embeds  both tokens and clusters. It defines cluster embeddings by `pushing' cluster apart by a factor of \( k \) (Step 1). Meanwhile, it maintains the original (according to $f$) difference between the embeddings of tokens from within the same cluster. This is done in Step 2(b), by adding the vector difference \( (f(x) - C_x) \) to the new cluster centroid, \( k\cdot C_x \). %, to obtain the new vector for a token vector \( x \).
 
 \noindent
 \textbf{How is cluster embedding used? } %We observe from Fig.~\ref{fig:token_embedding} that parameter $k$ only affects the embedding `distance' between clusters, rather than between tokens within the same cluster. Looking ahead, our cluster embedding will also only be used to select a cluster in a MLDP manner.
@@ -53,15 +54,15 @@ Looking ahead, our sanitization mechanism finds token \( y \) to replace a sensi
 
 \noindent
 \textbf{Effect of parameter $k$. }
-Since $k$ only affects cluster selection, our sanitization mechanism ensures that words within the same cluster  remain  ``indistinguishable'' from each other, regardless of their embedding---we apply a standard LDP mechanism when selecting a token from within a cluster. 
+Since $k$ only affects cluster selection, our sanitization mechanism ensures that words within the same cluster  remain  `indistinguishable' from each other, regardless of their embedding---we apply a standard LDP mechanism when selecting a token from within a cluster. 
 %Intuitively, if $x, y$ are in the same cluster, it is  difficult to tell whether \( x \) or \( y \) was the original word in the text.
 Conversely, tokens from different clusters may be more distinguishable, 
 %cluster indistinguishability 
 depending on \( k \). %, which determines the ``stretching'' of the cluster embedding. 
 The larger $k$ is, the more probability of choosing a better cluster, but the more distinguishable the clusters are (while still preserving MLDP). Utility gains from larger $k$  depend on evaluation metric; we give examples in our experiments (Sec.~\ref{sec:experiments}). %is larger; this enhances utility but still preserves MLDP. .
 
-In the  spirit of \cite{chatzikokolakis2013broadening} and SanText (which uses MLDP), we ``don’t mind'' some loss of indistinguishability if tokens belong to different clusters. To motivate this, consider the sensitive words as ``secrets'' to be protected and the ``distinguishability level'' between secrets. For instance, tokens representing locations near ``Paris''  and those near ``New York'' will likely be in different clusters. Disclosing that a token represents some location near Paris rather than  New York might be acceptable, but distinguishing between tokens representing specific locations within Paris might not be desirable. 
-In our framework, we tune the distinguishability between clusters using parameter $k$, while ensuring that tokens within the same cluster remain indistinguishable.
+In the  spirit of \cite{chatzikokolakis2013broadening} and SanText (which uses MLDP), we `don’t mind' some loss of indistinguishability if tokens belong to different clusters. To motivate this, consider the sensitive words as `secrets' to be protected and the `distinguishability level' between secrets. For instance, suppose tokens representing locations near `Paris'  and those near `New York' are in different clusters. Disclosing that a token is a location near Paris rather than  New York might be acceptable, but distinguishing between specific locations within Paris might not be desirable. 
+In our framework, we tune the distinguishability between clusters using parameter $k$, while ensuring that tokens within the same cluster remain `indistinguishable'.
 
 % In this vein, our framework allows for some distinguishability between clusters while ensuring that tokens within the same cluster remain indistinguishable. 
 
@@ -85,7 +86,7 @@ Cluster Embedding $f'$:
     \item \textbf{Inputs}: 
     Parameter $k$, 
     token embedding $f$, 
-    distance $d_c:\real^\ell \times \real^\ell \rightarrow \real$,
+    %distance $d_c:\real^\ell \times \real^\ell \rightarrow \real$,
     clustering $\{C\}$ of $X' \cup Y$
     \item \textbf{Output}: Embedding $f'$. On input a cluster $C$ or token $x \in X'\cup Y$, $f'$ outputs a real vector $\real^\ell$, which defines the embedding of the cluster $C$ or token $x$. 
 \end{itemize}
@@ -104,7 +105,7 @@ Cluster Embedding $f'$:
     \setlength\itemsep{0em}
         \item Compute the centroid of $C_x$. We overload notation and also use $C_x$ to denote the centroid of this cluster. $C_x =\frac{1}{|C_x|} \sum_{x'\in C_x} f(x')$. 
         % Here $|C_x|$ refers to the number of elements in the cluster.
-        \item Define $f'(x):= k\cdot C_x + (x - C_x)$
+        \item Define $f'(x):= k\cdot C_x + (f(x) - C_x)$
     \end{enumerate}
 \end{enumerate}
     }%
@@ -289,9 +290,9 @@ Now consider the following two cases:
 \vspace{0.5em}
 
 \noindent
-\textbf{SanText.} SanText can be described in terms of \clusant's MLDP algorithm (Fig.~\ref{fig:clusant_metricldp}) by requiring that $k = 1$, metric $d_c$ being the Euclidean distance, and that each cluster contains exactly one token (i.e., number of clusters is equal to number of tokens). This is because if each cluster has only one token, then Step (2) in Fig.~\ref{fig:clusant_metricldp} always chooses the same token (regardless of distance $d$), making this algorithm equivalent to SanText (recall, SanText does not consider token clustering).
+\textbf{SanText.} SanText can be described in terms of \clusant's MLDP algorithm (Fig.~\ref{fig:clusant_metricldp}) by requiring that $k = 1$, metric $d_c$ being the Euclidean distance, and that each cluster contains exactly one token (i.e., number of clusters is equal to number of tokens). This is because if each cluster has only one token, then Step 2 in Fig.~\ref{fig:clusant_metricldp} always chooses the same token (regardless of distance $d$), making this algorithm equivalent to SanText (recall, SanText does not consider token clustering).
 
 \vspace{0.5em}
 
 \noindent
-\textbf{CusText.} \clusant can be parametrized to {\em asymptotically} approach the behaviour of CusText, which always chooses a token from an `optimal' cluster. We first define the clustering and distance $d$ to be the same as CusText's, setting $d_c$ as Euclidean, and letting $k \rightarrow \infty$. Since $k \rightarrow \infty$, this implies that embeddings between different clusters are infinitely far (distance $d_c$ = Euclidean is infinitely large), and Step (1) of Fig.~\ref{fig:clusant_metricldp} will with overwhelming probability choose the cluster $C_x$ of the original token~$x$.
+\textbf{CusText.} \clusant can be parametrized to {\em asymptotically} approach the behaviour of CusText, which always chooses a token from an `optimal' cluster. We first define the clustering and distance $d$ to be the same as CusText's, setting $d_c$ as Euclidean, and letting $k \rightarrow \infty$. When $k \rightarrow \infty$, the distance $d_c$ between embeddings of different clusters are infinitely far (infinitely large), and Step 1 of Fig.~\ref{fig:clusant_metricldp} will with overwhelming probability choose the cluster $C_x$ of the original token~$x$.
