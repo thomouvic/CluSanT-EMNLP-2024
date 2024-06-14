@@ -1,0 +1,285 @@
+
+\section{\clusant: Cluster Exponential Mechanism with MLDP Guarantees}
+
+\clusant first clusters tokens based on their similarity. It then sanitizes sensitive tokens by first selecting a cluster, then selecting the replacement token from within that cluster. This approach makes contextually relevant replacements, improving the utility of sanitized text. Additionally, \clusant's privacy guarantees are independent of the clustering algorithm, allowing for flexible integration of different clustering methods.
+
+In this section, we present two of the components in our \clusant framework: cluster embedding (Sec.~\ref{sec:token_embedding}) and token sanitization (Sec.~\ref{sec:clusant_mldp_mech}). The method of obtaining a token clustering  is independent of this section and will be detailed in our experiments (see Sec. \ref{sec:experiments}). Through parametrizing our cluster embedding with parameter $k$, we obtain (Sec.~\ref{sec:prev_work_wrt_clusant})  a spectrum of token/text sanitization mechanisms that ranges from SanText at one extreme ($k = 1$) and CusText at the other extreme ($k \rightarrow \infty$). 
+ For now, we assume we already have a set of token clusters $\{C\}$. 
+% In Sec.~\ref{}, we show two versions of our token sanitization algorithm, one for LDP and one for metric LDP. Our token sanitization mechanism can be parameterized by a variety of distance functions between tokens, and by any clustering method. This makes flexibility one of \clusant framework's notable features. We will prove the LDP and metric LDP guarantees for any valid parameterization.  
+% We give an example of a set of valid parameters, and our clustering algorithm to Sec.~\ref{}.
+
+\vspace{0.5em}
+
+\noindent
+\textbf{Notation}:
+
+\begin{itemize}
+\setlength\itemsep{0em}
+
+%    \item $x, x' \in X'$: Sensitive tokens; $y \in Y$: Output of the token sanitization mechanism. Following previous work, we consider each token as being represented by a real vector $\mathbb{R}^\ell$ for some constant $\ell$. Also, similar to other works, we consider $Y=X'$.
+    \item Mapping $f$ between token $x$  and its real-vector representation in $\real^\ell$ is called a {\em token embedding}. If an embedding $f'$ also maps a cluster to a real vector, we call it a {\em cluster embedding}.
+    %\item Mapping $f'$ between vectors defined based on embedding $f$ and cluster centroids is called a {\em cluster embedding}.
+    \item $\{C\}$: A clustering, a set of subsets $C$ ({\em clusters}) partitioning $X'\cup Y$ (or $X'$ if $Y = X'$).  $C_x$ is the (unique) cluster  containing token $x$.
+    %\item $C_x$: Cluster that includes token $x$we sometimes overload notation and also use this to denote the centroid of the cluster $C_x$, computed with respect to a cluster embedding (Def.~\ref{def:d_c}). Note that since clusters partition $X'$, there always exists a unique $C_x$ for each $x \in X'$.
+    \item $d_c: \mathbb{R}^\ell \times \mathbb{R}^\ell \rightarrow \mathbb{R}$: Any distance function that is a metric. We use this to measure the distance between clusters, i.e., given cluster embedding $f'$, $d_c(C, C') = d_c\left(f'(C),\ f'(C') \right)$ for clusters $C, C'$.
+    \item $d: \mathbb{R}^\ell \times \mathbb{R}^\ell \rightarrow \mathbb{R}$: Any distance measure (which is not assumed to be a metric, and may be different from $d_c$) between two tokens.
+\end{itemize}
+
+
+%\begin{definition}[$d_c$ between two clusters]\label{def:d_c}
+%Let $C, C'$ be two clusters of tokens, and assume a cluster embedding $f'$ which maps each cluster to a real vector $\real^\ell$ for a constant $\ell$. Let $d_c(x, x')$ be a distance between tokens/real vectors.  Then we denote the distance $d_c(C, C')$ between two clusters $C, C'$ as:
+%$$
+%d_c(C, C') = d_c\left(f'(C),\ f'(C') \right)
+%$$
+%%In other words, $d_c(C, C')$ is the distance between the centroid of $C$ and the centroid of $C'$.
+%\end{definition}
+
+\subsection{Cluster Embedding}\label{sec:token_embedding}
+
+\looseness=-1
+We first define a cluster embedding given a token embedding and a clustering. Recall, a token embedding $f$ is a mapping from a token to a real vector. A cluster embedding $f'$, on the other hand, can also map  a cluster to a real vector. Our cluster embedding is parameterized by a constant~\( k \geq 1 \).
+
+Intuitively, we begin with a standard token embedding. Then, given a token clustering, we define the cluster embedding via parameter \( k \),  which intuitively allows us to tune how `far' the clusters are from each other; the larger \( k \) is, the further apart the different clusters of tokens are in the cluster embedding. We define our cluster embedding algorithm formally in Fig.~\ref{fig:token_embedding}.
+
+Specifically, we define a cluster embedding \( f' \) which is based on the original token embedding \( f \) and the cluster centroids. The cluster embedding \( f' \) applies to both token vectors and centroid vectors. Essentially, it stretches a cluster centroid by a factor of \( k \) and adds the vector difference \( (x - C_x) \) to the stretched vector for \( C_x \) to obtain the new vector for a token vector \( x \).
+
+\noindent
+\textbf{How is cluster embedding used? } %We observe from Fig.~\ref{fig:token_embedding} that parameter $k$ only affects the embedding `distance' between clusters, rather than between tokens within the same cluster. Looking ahead, our cluster embedding will also only be used to select a cluster in a MLDP manner.
+Looking ahead, our sanitization mechanism finds token \( y \) to replace a sensitive token \( x \): it first selects a cluster, then  selects \( y \) from within this cluster. We use the embedding \( f' \) to select a cluster and the embedding \( f \) to select \( y \) from within the cluster. 
+
+\noindent
+\textbf{Effect of parameter $k$. }
+Since $k$ only affects cluster selection, our sanitization mechanism ensures that words within the same cluster  remain  ``indistinguishable'' from each other, regardless of their embedding---we apply a standard LDP mechanism when selecting a token from within a cluster. 
+%Intuitively, if $x, y$ are in the same cluster, it is  difficult to tell whether \( x \) or \( y \) was the original word in the text.
+Conversely, tokens from different clusters may be more distinguishable, 
+%cluster indistinguishability 
+depending on \( k \). %, which determines the ``stretching'' of the cluster embedding. 
+The larger $k$ is, the more probability of choosing a better cluster, but the more distinguishable the clusters are (while still preserving MLDP). Utility gains from larger $k$  depend on evaluation metric; we give examples in our experiments (Sec.~\ref{sec:experiments}). %is larger; this enhances utility but still preserves MLDP. .
+
+In the  spirit of \cite{chatzikokolakis2013broadening} and SanText (which uses MLDP), we ``don’t mind'' some loss of indistinguishability if tokens belong to different clusters. To motivate this, consider the sensitive words as ``secrets'' to be protected and the ``distinguishability level'' between secrets. For instance, tokens representing locations near ``Paris''  and those near ``New York'' will likely be in different clusters. Disclosing that a token represents some location near Paris rather than  New York might be acceptable, but distinguishing between tokens representing specific locations within Paris might not be desirable. 
+In this vein, our framework allows for some distinguishability between clusters while ensuring that tokens within the same cluster remain indistinguishable. 
+
+
+
+% Both SOTA works (SanText and CusText) use the standard token embedding from~\cite{pennington2014glove}. However, the standard embedding has the drawback that certain words which are semantically close (and thus has close embeddings) should not be replaced by one another. [.... PLEASE INSERT HERE EXAMPLE of how e.g., replacing scientist with science is bad]. As we will see in our experiments Sec.~\ref{sec:experiments}, pushing the clusters away from each other by parameter $k$ has two effects: (1) It allows us to refine the token embedding so that tokens that grammatically/logically incoherent replacements for each other are moved further away, leading to better coherence scores and (2) The parameter $k$ can  tune the trade-off between privacy and utility (see Sec.~\ref{sec:k_tradeoff})---in particular, in the metric DP case, when $k \rightarrow
+% %\infty$, we always choose a token from the `best' cluster, which asymptotically approaches the behaviour of CusText. See Sec.~\ref{sec:k_tradeoff} for more detail on this trade-off as well as how to express SanText in terms of \clusant.
+
+\begin{figure}[!t]
+    \centering
+    \setlength\fboxsep{0.3cm} %margin in box
+
+    \noindent\fbox{%
+    \parbox{0.9\columnwidth}{
+
+
+Cluster Embedding $f'$:
+\begin{itemize}
+\setlength\itemsep{0em}
+
+    \item \textbf{Inputs}: Parameter $k$, token embedding $f$ which maps each token to a real vector, i.e., $f:X'\cup Y\rightarrow \real^\ell$, a distance $d_c:\real^\ell \times \real^\ell \rightarrow \real$, a clustering $\{C\}$ of $X' \cup Y$
+    \item \textbf{Output}: Embedding $f'$. On input a cluster $C$ or token $x \in X'\cup Y$, $f'$ outputs a real vector $\real^\ell$, which defines the embedding of the cluster $C$ or token $x$. 
+\end{itemize}
+\begin{enumerate}
+    \item %\subsubsection{Defining $d_c$} 
+    For each cluster $C\in \{C\}$:
+    \begin{enumerate}
+    \setlength\itemsep{0em}
+
+        \item Compute the centroid of $C$. We overload notation and also use $C$ to denote the centroid of this cluster. $C =\frac{1}{|C|} \sum_{x'\in C} f(x')$. 
+        % Here $|C|$ refers to the number of elements in the cluster.
+        \item Define $f'(C):= k\cdot C$
+    \end{enumerate}
+    \item For each token $x \in X'\cup Y$:
+    \begin{enumerate}
+    \setlength\itemsep{0em}
+        \item Compute the centroid of $C_x$. We overload notation and also use $C_x$ to denote the centroid of this cluster. $C_x =\frac{1}{|C_x|} \sum_{x'\in C_x} f(x')$. 
+        % Here $|C_x|$ refers to the number of elements in the cluster.
+        \item Define $f'(x):= k\cdot C_x + (x - C_x)$
+    \end{enumerate}
+\end{enumerate}
+    }%
+}
+\caption{Cluster embedding with parameter~$k$}
+    \label{fig:token_embedding}
+\end{figure}
+
+
+%\textbf{TODO: move the parts about pushing centroids here and say present it as refining token embedding (starting from some standard given token embedding, eg ???). The next subsections should not have pushing centroids. }
+
+% \subsection{Token Sanitization Mechanism for (Standard) $\epsilon$-LDP Guarantees}
+
+% The main observation behind \clusant's token sanitization mechanism is the following: CusText achieves good utility since it ensures that a token $x$ is replaced only by another (possibly the same) token $x' \in C_x$, the cluster which $x$ is in. However, by Thm.~\ref{custext_priv} we showed that this approach makes it impossible to achieve (M)LDP. Instead, \clusant gives a (small) probability of choosing the `wrong' cluster---in fact, we can use the exponential mechanism to choose the cluster from which we will replace the token $x$. We show in Thm.~\ref{thm:clusant_mldp} that our LDP mechanism in Fig.~\ref{fig:clusant_ldp} achieves $\epsilon$-LDP. 
+
+
+% \begin{figure}[!t]
+%     \centering
+%     \setlength\fboxsep{0.3cm} %margin in box
+
+%     \noindent\fbox{%
+%     \parbox{0.9\columnwidth}{
+%     \textbf{$M(x)$:}
+
+%     \begin{enumerate}
+%     \item The mechanism is parametrised by the set of clusters $\{C\}$, token embedding $f$, cluster embedding $f'$, metric $d_c$,  distance $d$, and privacy parameter $\epsilon$.
+%     \item Choose a cluster $C$:
+%     \begin{itemize}
+%         \item Run the exponential mechanism $M_E(C_x)$ parametrised by $\epsilon_E = \epsilon/2$, where the input and output space are both $\{C\}$ (set of all clusters) with the given cluster embedding, utility is $u_c(C, C') = -d_c(C, C')$, and $\Delta u_c = \max_{x, x', y\in X'} |d_c(C_x, C_y) - d_c(C_{x'}, C_y)|$.
+%     \end{itemize}
+%     \item Choose a token within the chosen cluster $C$:
+%     \begin{itemize}
+%         \item Run the exponential mechanism $M_E(x)$ parametrised by $\epsilon_E = \epsilon/2$, where the input space is $X'$ (sensitive tokens) with the given token embedding, the output space is $C$ (tokens in cluster $C$), utility $u$ is $u(x, x') = -d(x, x')$, and $\Delta u = \max_{x, x', y\in X'} |d(x, y) - d(x', y)|$
+%     \end{itemize}
+%     \item Output the token chosen above.
+% \end{enumerate}
+    
+%     }%
+% }
+%     \caption{\clusant's $\epsilon$-LDP Token Sanitization Mechanism}
+%     \label{fig:clusant_ldp}
+% \end{figure}
+
+% \begin{theorem}\label{thm:clusant_ldp}
+%     $M(x)$ in Fig.~\ref{fig:clusant_ldp} achieves $\epsilon$-LDP.
+% \end{theorem}
+
+% \begin{proof}
+%     Fix $x, x', y\in X'$. For any token $w$ and cluster $C$, let $C_{w,C}$ denote the event where cluster $C$ is chosen in Step 1. of $M(w)$. Let $T_{w, z}$ denote the event where Step 2. in $M(w)$ chooses token $z$. 
+%     \begin{align*}
+%         \frac{\Pr(M(x) = y)}{\Pr(M(x') = y)} & = \frac{\Pr(C_{x, C_y}) \Pr(T_{x, y} | C_{x, C_y})}{\Pr(C_{x', C_y}) \Pr(T_{x', y} | C_{x', C_y})}\\
+%         &= \frac{\Pr(C_{x, C_y})}{\Pr(C_{x', C_y})} \cdot \frac{\Pr(T_{x, y} | C_{x, C_y})}{\Pr(T_{x', y} | C_{x', C_y})}\\
+%         &\leq \exp(\epsilon/2)\exp(\epsilon/2)\\
+%         &= \exp(\epsilon)
+%     \end{align*}
+%     Where the inequality above is from the privacy of the exponential mechanism (Thm.~\ref{thm:exp_mech_privacy}).
+    
+% \end{proof}
+
+% \subsubsection{Effect of $k$ on LDP} Choosing the parameter $k$ (for our token embedding, Sec.~\ref{sec:token_embedding}) is irrelevant for our LDP mechanism $M$---both the distance between centroids and the sensitivity $\Delta u_c$ are increased linearly by $k$. Thus, from the exponential mechanism Def.~\ref{def:expmech}, we see that $k$ is cancelled out in the probability of selecting a token, and  has no effect on the mechanism. 
+
+
+
+
+\subsection{Token Sanitization Mechanism for Metric LDP Guarantees}\label{sec:clusant_mldp_mech}
+
+
+The main observation behind \clusant's token sanitization mechanism is the following: CusText achieves good utility since it ensures that a token $x$ is replaced only by another (possibly the same) token $x' \in C_x$, the cluster which $x$ is in. However, by Thm.~\ref{custext_priv} we showed that this approach makes it impossible to achieve (M)LDP. Instead, \clusant gives a (small) probability of choosing the `wrong' cluster---in fact, we can also use the exponential mechanism to choose the cluster from which we find $y$. 
+We show our mechanism in Fig.~\ref{fig:clusant_metricldp}.
+%
+By ensuring that the distance function $d_c$ used to choose a cluster (in Step (1) of the mechanism) is a metric (plus a couple more properties), we can show that $M$ in Fig.~\ref{fig:clusant_metricldp} achieves $\epsilon$-MLDP.
+% , even when replacing the sensitivity of $d_c$ with $1$. 
+% This intuitively improves utility since sensitivity is generally $> 1$ for the token representations considered. We show through experiments the utility improvements in Sec.~\ref{sec:experiments}.
+
+%The following mechanism is constructed to achieve $\epsilon$-metric LDP, which is the privacy guarantee of SanText. Note that CusText cannot  achieve metric LDP (Thm.~\ref{custext_priv}).\\
+
+\begin{figure}[!t]
+    \centering
+    \setlength\fboxsep{0.3cm} %margin in box
+
+    \noindent\fbox{%
+    \parbox{0.9\columnwidth}{
+
+
+    
+$M(x)$:
+% \begin{itemize}
+%     \item 
+    The mechanism is parameterised by the set of clusters $\{C\}$ (where all tokens in clusters are in set $X'\cup Y$), token embedding $f$, cluster embedding $f'$, metric $d_c$,  distance $d$, and privacy parameter $\epsilon$. \\
+    \textbf{Input}: token $x\in X'$; \textbf{Output}: token in $Y$
+% \end{itemize}
+
+\begin{enumerate}
+    \item Choose a cluster $C$:
+    % \begin{itemize}
+    %     \item 
+        Run exponential mechanism but modified by replacing $\Delta u_c$ with constant 1, where $M_E(C_x)$ is parametrised by $\epsilon_E = \epsilon/2$, input and output space are both $\{C\}$ (set of all clusters) with the cluster embedding $f'$, utility $u_c(C, C') = -d_c(C, C')$.
+    % \end{itemize}
+    \item Choose token within chosen cluster~$C$:
+    % \begin{itemize}
+    %     \item 
+        Run  exponential mechanism $M_E(x)$ parametrised by $\epsilon_E = \epsilon/2$, where the input space is $X'$ (all tokens) with the token embedding $f$, the output space is $C$ (tokens in cluster $C$), utility $u$ is $u(x, x') = -d(x, x')$, and $\Delta u = \max_{x, x', y\in X'} |d(x, y) - d(x', y)|$
+    % \end{itemize}
+    \item Output the token chosen above.
+\end{enumerate}
+    }%
+}
+\caption{\clusant's $\epsilon$-MLDP Sanitization Mechanism}
+    \label{fig:clusant_metricldp}
+\end{figure}
+
+%In the following theorem, we state the requirements on the distance function $d_c$ chosen in order for $M$ in Fig.~\ref{fig:clusant_metricldp} to satisfy $\epsilon$-MLDP.
+
+We formalize our privacy statement below.
+
+\begin{theorem}\label{thm:clusant_mldp}
+    Suppose $d_c$ and $k$ are chosen so that: 
+    \begin{itemize}
+    \setlength\itemsep{0em}
+    \item $d_c$ is a metric.
+    \item For all $C_x\not = C_x'$, (1) $d_c(x, x') \geq 1$, and (2) %if $C_x \not= C_{x'}$, 
+    $d_c(C_x, C_{x'}) + 1 \leq 2\cdot d_c(x, x')$.  \footnote{For (1): 
+    %if $C_x = C_{x'}$ this can be satisfied by assuming $d_c(x, x') \geq 1$. Otherwise, 
+    If $C_x \not= C_{x'}$ then we can choose $k$ large enough so that $d_c(x, x') \geq 1$. For (2) this can be satisfied by choosing a large enough $k$ (intuitively, if $k$ is large then the distance $d_c(x, x')$ becomes large).}
+\end{itemize}
+
+
+
+  Then, $M(x)$ in Fig.~\ref{fig:clusant_metricldp}  achieves $\epsilon$-metric LDP for the distance $d_c$ defined above.
+\end{theorem}
+
+% \begin{proof}
+\noindent
+\textit{Proof.} 
+Fix any $x, x' \in X', y \in Y$. If $x = x'$ then $\frac{\Pr(M(x) = y)}{\Pr(M(x') = y)} = 1 = e^0$ so the MLDP inequality trivially holds. 
+Thus, consider $x \not= x'$. 
+
+We have $\Pr(M(x) = y)$ equal to $\Pr(M_1(x) = C_y)\Pr(M_2(x) = y | M_1(x) = C_y)$ where (1) $M_1(x) = C_y$ is the event that Step 1 of $M$ chooses $C_y$, and (2) $M_2(x) = y | M_1(x) = C_y$ is the event that Step 2 of $M'$ chooses token $y$, given Step 1 chooses $C_y$. 
+
+
+Now, conditioned on  Step 1 choosing cluster $C_y$, Step 2 is simply the exponential mechanism with privacy $\epsilon/2$. Thus, $\frac{\Pr(M_2(x) = y | M_1(x) = C_y)}{\Pr(M_2(x') = y | M_1(x') = C_y)} \leq e^{\epsilon/2}.$ Moreover, $\Pr(M_1(x) = C_y)/\Pr(M_1(x') = C_y) \leq \exp(\frac{\epsilon}{2} |d_c(C_x, C_y) - d_c(C_{x'} - C_y)|)$ by Thm.~\ref{thm:exp_mech_privacy}. Thus
+
+%Since $\Delta u_c$ in Step 1. of $M'(x)$ is set to $\Delta u_c = 1$, and Step 2. remains the same as that of $M$, then we have that:
+\begin{align*}
+        \frac{\Pr(M(x) = y)}{\Pr(M(x') = y)} & \leq e^{\frac{\epsilon}{2} |d_c(C_x, C_y) - d_c(C_{x'} - C_y)|} e^{\frac{\epsilon}{2}}\\
+        &= e^{\frac{\epsilon}{2}(|d_c(C_x, C_y) - d_c(C_{x'} - C_y)| +1)}
+\end{align*}
+
+%We first prove two simple facts about $d_c$: \\
+
+\noindent
+%\textbf{Fact.} 
+Given that $d'$ is a metric, for all $C_x, C_{x'}, C_y$
+\begin{align*}
+    |&d_c(C_x, C_y) - d_c(C_{x'}, C_y)| \\
+    &= |d'(k \cdot C_x, k\cdot C_y) - d'(k \cdot C_{x'}, k \cdot C_y)|\\
+    &\leq d'(k \cdot C_x, k\cdot C_{x'}) = d_c(C_x, C_{x'})
+\end{align*}
+
+\noindent
+%\textbf{Fact 2.} If $x \not= x'$, then $d_c(x, x') \geq 1$. This is because if $x \not= x'$, and $d'$ is a metric, then $k\cdot C_x + (x - C_x) \not= k\cdot C_{x'} + ({x'} - C_{x'})$\textbf{TODO: Double check this is true in general, or I have to assume something about $d'$}. By assumption, if $y\not= z$, then $d'(y,z)\geq 1$. Then $d_c(x, x') = d'(k\cdot C_x + (x - C_x), k\cdot C_{x'} + ({x'} - C_{x'})) \geq 1$. \\
+
+\noindent
+Now consider the following two cases:
+\begin{enumerate}
+\setlength\itemsep{0em}
+    \item $C_x = C_{x'}$: Then, $|d_c(C_x, C_y) - d_c(C_{x'} - C_y)| = 0$ and $$e^{\frac{\epsilon}{2}(|d_c(C_x, C_y) - d_c(C_{x'} - C_y)| +1)} \leq e^\epsilon \leq e^{\epsilon\cdot d_c(x, x')}$$ 
+    \item $C_x \not= C_{x'}$: We showed above that  $|d_c(C_x, C_y) - d_c(C_{x'} - C_y)| \leq d_c(C_x, C_{x'})$. Moreover, by assumption, for $C_x \not= C_x'$, $d_c(C_x, C_{x'}) + 1 \leq 2\cdot d_c(x, x')$. 
+    Thus, 
+    \begin{align*}
+        e^{\frac{\epsilon}{2}(|d_c(C_x, C_y) - d_c(C_{x'} - C_y)| +1)} &\leq e^{\frac{\epsilon}{2}(2\cdot d_c(x, x'))}\\
+        &=e^{\epsilon\cdot d_c(x, x')}
+    \end{align*} 
+\end{enumerate}
+% \end{proof}
+
+\subsubsection{Describing SanText and CusText in Terms of \clusant}\label{sec:prev_work_wrt_clusant}
+\clusant can be parametrized, via the clustering and cluster embedding parameter $k$, to achieve a spectrum of $\epsilon$-MLDP token sanitization mechanisms. SanText and CusText can be considered as two extremal values of this parametrization.
+
+\vspace{0.5em}
+
+\noindent
+\textbf{SanText.} SanText can be described in terms of \clusant's MLDP algorithm (Fig.~\ref{fig:clusant_metricldp}) by requiring that $k = 1$, metric $d_c$ being the Euclidean distance, and that each cluster contains exactly one token (i.e., number of clusters is equal to number of tokens). This is because if each cluster has only one token, then Step (2) in Fig.~\ref{fig:clusant_metricldp} always chooses the same token (regardless of distance $d$), making this algorithm equivalent to SanText (recall, SanText does not consider token clustering).
+
+\vspace{0.5em}
+
+\noindent
+\textbf{CusText.} \clusant can be parametrized to {\em asymptotically} approach the behaviour of CusText, which always chooses a token from an `optimal' cluster. We first define the clustering and distance $d$ to be the same as CusText's, setting $d_c$ as Euclidean, and letting $k \rightarrow \infty$. Since $k \rightarrow \infty$, this implies that embeddings between different clusters are infinitely far (distance $d_c$ = Euclidean is infinitely large), and Step (1) of Fig.~\ref{fig:clusant_metricldp} will with overwhelming probability choose the cluster $C_x$ of the original token $x$.

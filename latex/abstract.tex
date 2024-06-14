@@ -1,0 +1,48 @@
+
+\begin{abstract}
+% What we do, why is it important
+\looseness=-1
+%In light of the pressing demand for effective privacy-preserving methods in text processing, w
+We introduce \clusant, a novel text sanitization framework based on Metric Local Differential Privacy (MLDP). 
+Our framework consists of three components:   token clustering, cluster embedding, and token sanitization. 
+For the first, \clusant employs Large Language Models (LLMs) to create %a substitution universe---
+a set of potential substitute tokens which we meaningfully cluster. 
+Then, we develop a parameterized cluster embedding that balances the trade-off between privacy and utility. 
+Lastly, we propose a MLDP algorithm which sanitizes/substitutes sensitive tokens in a text with the help of our embedding. 
+Notably, our MLDP-based framework can be tuned with parameters 
+such that (1) existing state-of-the-art (SOTA) token sanitization algorithms 
+% ---SanText and CusText---
+can be described---and improved---via our framework with extremal values of our parameters, and (2) by varying our parameters, we allow for a whole spectrum of privacy-utility tradeoffs between the two SOTA. 
+% By choosing appropriate parameters, \clusant can achieve in a sense `the best (balance) of both worlds'---it can either satisfy (M)LDP approaching that of SanText, or satisfy stronger utility guarantees approaching that of CusText. 
+% In fact, with improved clustering techniques, \clusant can even exceed the utility of CusText while achieving strictly stronger utility.
+\looseness=-1
+% Lastly, to benchmark \clusant, we propose new evaluation metrics that extend beyond SOTA approaches, capturing important properties of sanitized text such as {\em semantic similarity} and {\em logical/grammatical coherence}. 
+Our experiments demonstrate \clusant's balance between privacy and semantic coherence, highlighting its potential as a valuable framework for privacy-preserving text sanitization.     
+\end{abstract}
+
+
+% Under both previous metrics and new ones, which leverage the capabilities of LLMs,
+
+
+% \begin{abstract}
+% \begin{itemize}
+%     \item Motivation: (1) Text sanitization that achieves the utility and privacy strengths of two SOTAs (2) Leverage power of LLMs to help evaluate and boost utilty of DP text sanitization
+
+%     \item Previous work and limitations: 
+%     \begin{enumerate}
+%         \item SanText: Poor performance. Many tokens to map to so standard exponential mechanism did not work too well.
+%         \item CusText: Usually has better performance than SanText but: (1) cannot achieve level of  privacy of SanText (2) there is probability that clustering does not make any sense, causing bad performance
+%         \item All(?) previous work: Metrics used were not good, e.g., relevancy is easy to achieve because everything is relevant; did not measure things like grammatical/logical coherency.
+%     \end{enumerate}
+
+%     \item Our contributions:
+%     \begin{enumerate}
+%         \item Better metrics: ChatGPT's coherency (does it make sense?), semantic similarity (is it similar to unsanitized text?)
+%         \item Show how to improve CusText with better clustering: glove, ChatGPT,...?
+%         \item \clusant: privacy of SanText and utility comparable to CusText (both with the better clustering)
+%         \item Test previous works/our work with new metrics
+%     \end{enumerate}
+% \end{itemize}
+    
+% \end{abstract}
+

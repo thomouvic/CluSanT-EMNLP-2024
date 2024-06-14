@@ -1,0 +1,653 @@
+% This must be in the first 5 lines to tell arXiv to use pdfLaTeX, which is strongly recommended.
+\pdfoutput=1
+% In particular, the hyperref package requires pdfLaTeX in order to break URLs across lines.
+
+\documentclass[11pt]{article}
+
+% Change "review" to "final" to generate the final (sometimes called camera-ready) version.
+% Change to "preprint" to generate a non-anonymous version with page numbers.
+\usepackage[review]{acl}
+
+% Standard package includes
+\usepackage{times}
+\usepackage{latexsym}
+
+\usepackage{xspace}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{hyperref}
+
+\newcommand{\clusant}{CluSanT\xspace}
+\newcommand{\real}{\mathbb{R}}
+\newcommand{\nat}{\mathbb{N}}
+
+\newtheorem{definition}{Definition}
+\newtheorem{theorem}{Theorem}
+\newtheorem{corollary}{Corollary}
+
+% For proper rendering and hyphenation of words containing Latin characters (including in bib files)
+\usepackage[T1]{fontenc}
+% For Vietnamese characters
+% \usepackage[T5]{fontenc}
+% See https://www.latex-project.org/help/documentation/encguide.pdf for other character sets
+
+% This assumes your files are encoded as UTF8
+\usepackage[utf8]{inputenc}
+
+% This is not strictly necessary, and may be commented out,
+% but it will improve the layout of the manuscript,
+% and will typically save some space.
+\usepackage{microtype}
+
+% This is also not strictly necessary, and may be commented out.
+% However, it will improve the aesthetics of text in
+% the typewriter font.
+\usepackage{inconsolata}
+
+%Including images in your LaTeX document requires adding
+%additional package(s)
+\usepackage{graphicx}
+
+% If the title and author information does not fit in the area allocated, uncomment the following
+%
+%\setlength\titlebox{<dim>}
+%
+% and set <dim> to something 5cm or larger.
+
+\title{\clusant: Differentially Private and Semantically Coherent \\Text Sanitization}
+
+% Author information can be set in various styles:
+% For several authors from the same institution:
+% \author{Author 1 \and ... \and Author n \\
+%         Address line \\ ... \\ Address line}
+% if the names do not fit well on one line use
+%         Author 1 \\ {\bf Author 2} \\ ... \\ {\bf Author n} \\
+% For authors from different institutions:
+% \author{Author 1 \\ Address line \\  ... \\ Address line
+%         \And  ... \And
+%         Author n \\ Address line \\ ... \\ Address line}
+% To start a separate ``row'' of authors use \AND, as in
+% \author{Author 1 \\ Address line \\  ... \\ Address line
+%         \AND
+%         Author 2 \\ Address line \\ ... \\ Address line \And
+%         Author 3 \\ Address line \\ ... \\ Address line}
+
+\author{First Author \\
+  Affiliation / Address line 1 \\
+  Affiliation / Address line 2 \\
+  Affiliation / Address line 3 \\
+  \texttt{email@domain} \\\And
+  Second Author \\
+  Affiliation / Address line 1 \\
+  Affiliation / Address line 2 \\
+  Affiliation / Address line 3 \\
+  \texttt{email@domain} \\}
+
+%\author{
+%  \textbf{First Author\textsuperscript{1}},
+%  \textbf{Second Author\textsuperscript{1,2}},
+%  \textbf{Third T. Author\textsuperscript{1}},
+%  \textbf{Fourth Author\textsuperscript{1}},
+%\\
+%  \textbf{Fifth Author\textsuperscript{1,2}},
+%  \textbf{Sixth Author\textsuperscript{1}},
+%  \textbf{Seventh Author\textsuperscript{1}},
+%  \textbf{Eighth Author \textsuperscript{1,2,3,4}},
+%\\
+%  \textbf{Ninth Author\textsuperscript{1}},
+%  \textbf{Tenth Author\textsuperscript{1}},
+%  \textbf{Eleventh E. Author\textsuperscript{1,2,3,4,5}},
+%  \textbf{Twelfth Author\textsuperscript{1}},
+%\\
+%  \textbf{Thirteenth Author\textsuperscript{3}},
+%  \textbf{Fourteenth F. Author\textsuperscript{2,4}},
+%  \textbf{Fifteenth Author\textsuperscript{1}},
+%  \textbf{Sixteenth Author\textsuperscript{1}},
+%\\
+%  \textbf{Seventeenth S. Author\textsuperscript{4,5}},
+%  \textbf{Eighteenth Author\textsuperscript{3,4}},
+%  \textbf{Nineteenth N. Author\textsuperscript{2,5}},
+%  \textbf{Twentieth Author\textsuperscript{1}}
+%\\
+%\\
+%  \textsuperscript{1}Affiliation 1,
+%  \textsuperscript{2}Affiliation 2,
+%  \textsuperscript{3}Affiliation 3,
+%  \textsuperscript{4}Affiliation 4,
+%  \textsuperscript{5}Affiliation 5
+%\\
+%  \small{
+%    \textbf{Correspondence:} \href{mailto:email@domain}{email@domain}
+%  }
+%}
+
+\begin{document}
+\maketitle
+\input{abstract}
+
+
+
+
+
+
+
+\section{Introduction}
+
+The advent of digital technology has led to an exponential increase in the generation and processing of textual data, elevating the importance of privacy within the realm of Natural Language Processing (NLP) \cite{jegorova2022survey}.  
+Differential Privacy (DP) \cite{dwork2006differential}, known for its strong mathematical privacy guarantees, presents a viable solution to these challenges. However, applying DP in NLP is fraught with difficulties due to the complex nature of textual data %which often compromises between maintaining data utility and ensuring privacy 
+\cite{carlini2021extracting}, \cite{song2020information}.
+
+Existing implementations of DP in NLP typically degrade semantic integrity and text usability, posing significant challenges for applications requiring high-quality, coherent data processing. This underscores the need for advanced methods capable of finely balancing privacy with utility \cite{lyu2020towards,anil2021large,dupuy2022efficient, li2018towards,mireshghallah2021privacy}. 
+Current state-of-the-art (SOTA) techniques, such as SanText \cite{yue2021differential} and CusText \cite{chen2023customized}, illustrate these challenges. SanText, while focused on maximizing privacy, significantly diminishes the utility of sanitized text. Conversely, CusText can preserve better text utility  but can only achieve privacy in a limited manner. 
+%We briefly describe both below.
+
+% Due their relevance to our work, we describe and compare SanText and CusText more in detail later in the paper in Sec.~\ref{sec:prelim}. 
+
+\looseness=-1
+SanText achieves {\em metric local DP (MLDP)} text sanitization by probabilistically replacing individual sensitive tokens (e.g., `Paris') with alternative ones (e.g., `Lyon'). Replacements are selected with probability proportional to their semantic distance to the original, in a manner similar to the {\em exponential mechanism}~\cite{mcsherry2007mechanism} in DP literature. 
+While for smaller number of tokens this achieves meaningful replacements, applying this broadly can 
+increase the likelihood of selecting less desirable ones. 
+%
+For instance, while `Lyon' should be one of the top replacements for `Paris,' the combined probability of a large number of low-utility city names can outweigh `Lyon,' leading to poor choices.
+%
+% For instance, while `feline' should be one of the top replacement for `cat,' the combined probability of a large number of low-utility animal names can outweigh `feline', leading to poor choices. 
+%
+In response, CusText proposed to first cluster tokens based on their similarity. It then performs replacements by selecting only tokens from the relevant cluster, via the exponential mechanism.  
+Though improving utility, this approach also limits CusText's privacy guarantees to within each cluster.
+
+
+To reconcile this conflict between privacy and utility in the SOTA, we  introduce \clusant,\footnote{\clusant is an acronym for \textbf{Clus}ter-based \textbf{San}itization of \textbf{T}ext.} a novel framework for text sanitization consisting of three components: (1) token clustering, (2) cluster embedding, and (3) token sanitization. Following  SOTA approaches, \clusant performs text sanitization by treating a text as a list of tokens, replacing sensitive ones in a privacy (MLDP)-preserving manner.  %then going through this list, either replacing it if the token is deemed {\em sensitive}, or otherwise leaving the token alone. 
+% The resulting sanitized text is thus the original text, with the sensitive words replaced (in the case of \clusant, via a (LDP) mechanism which we will call a {\em token sanitization} algorithm). 
+While \clusant's token sanitization algorithm relies on the set of tokens being clustered according to their similarity, we emphasize that a notable feature of interest in \clusant is that the privacy guarantees of our token sanitization are {\em agnostic} to the clustering algorithm. 
+Thus, the framework allows for flexible plug-and-play of different clusterings.
+% ---determining the best clustering for a specific application is an interesting future direction.  
+The general approach of \clusant is outlined through the following list of technical challenges that we address.
+
+
+\subsection{Technical Challenges}
+We summarize challenges in the SOTA,  along with our proposed solutions:
+
+\begin{itemize}
+\setlength\itemsep{0em}
+    \item \textbf{SanText:} %The application of sanitization uniformly across all tokens often results in a disproportionately
+    There is a high probability density over less desirable tokens. \\
+    \textbf{Our Strategy:} \clusant  clusters tokens in a semantically meaningful manner, then select the optimal cluster (thus a more optimal replacement token) with high probability.  %We employ a clustering mechanism, to ensure that the selection of words is confined predominantly to the desired cluster, thereby reducing the likelihood of choosing suboptimal tokens.
+
+    \item \textbf{CusText:} 
+    %The utility of CusText depends on its requirement that the sanitized token is from the same cluster as the original token. 
+    CusText's approach {\em cannot} achieve standard (M)LDP (Theorem~\ref{custext_priv}). \\
+    \textbf{Our Strategy:} 
+    We introduce a MLDP mechanism that selects a cluster based on a cluster embedding. %This method introduces a small probability of selecting an ``incorrect'' cluster. 
+    Parameter $k$ parametrizes the cluster embedding, tuning the probability of selecting the optimal cluster. % and the achieved MLDP guarantees.
+    %within our cluster embedding controls the distance between clusters, affecting how likely we are to choose incorrect clusters.
+    % Our approach introduces a metric LDP mechanism to select clusters based on a parametrized cluster embedding we devise. This method introduces a (small) probability of selecting an ``incorrect'' cluster. Parameter $k$ within our cluster embedding controls the distance between clusters, thus affecting how likely we are to choose incorrect clusters.
+    % Our approach introduces a metric LDP mechanism to select clusters based on a parametrized cluster embedding we devise. This method introduces a (small) probability of selecting an `incorrect' cluster. 
+    % We also introduce a parameter $k$ controlling the distance between clusters and thus how likely we choose incorrect clusters. 
+    
+    \item \textbf{General Coherence:} Previous frameworks, including both SanText and CusText, have not adequately addressed issues related to grammatical or logical coherence within the text. \\ \textbf{Our Strategy:} Our experiments evaluate semantic similarity and coherence in sanitized texts,  through metrics developed with the assistance of Large Language Models (LLMs). 
+\end{itemize}
+
+
+
+% \subsection{Technical Challenges} 
+% \textbf{Note below is rough outline. If anyone's up for it please help write this into nice prose}
+% Challenges in SOTA and how we address them:
+% \begin{itemize}
+%     \item SanText: since applied to all tokens, there is a high probability density on worse tokens. \clusant: We cluster and ensure that with high probability, we choose a word in the desired cluster.
+%     \item CusText: clusters get rid of bad tokens but: clusters may sometimes not make sense (show example), and CusText cannot achieve (M)LDP (Thm.~\ref{}). \clusant: We use metric DP mechanism to choose cluster so that there is a (small) probability of choosing the wrong cluster---this gives us metric DP overall. 
+%     \item Both works: Did not address grammatical or logical coherency. \clusant: We introduce new metrics to address this, and ensure our clusters are generated so that we enforce this coherency. 
+% \end{itemize}
+
+%that \clusant's token sanitization at its core uses the exponential mechanism, similar to SOTA. Similar to CusText, we cluster
+%leverages a two-step LDP approach with Large Language Models (LLMs) to generate substitution words,  organized into meaningful clusters. This approach
+% to select an appropriate cluster and subsequently a specific word within that cluster, effectively obscuring sensitive information while maintaining text utility. \clusant employs the Cluster Exponential Mechanism with Metric DP Guarantees to refine the privacy-utility trade-off, focusing on enhancing utility metrics without compromising privacy.
+
+
+% \subsection{New Metrics for Evaluating Utility of Sanitized Text} 
+% With respect to utility evaluation, 
+% traditional metrics often rely on the accuracy of sentiment analysis, which are inapplicable to real-life contexts, such as legal documents, medical records, and confidential business communications. 
+% To address this gap, we propose new metrics developed with the aid of Large Language Models (LLMs). These metrics assess the semantic similarity and coherence of sanitized text, inspired by \cite{chiang2023can}, who noted that LLMs often better judge relevance and coherence than humans.
+% These metrics provide a more accurate reflection of the quality of the output, making sure that sanitized texts retain their intended meaning and are usable in their specific contexts.
+
+\subsection{Summary of Contributions}
+% By addressing the limitations of existing methods and introducing improved evaluation metrics,
+%\clusant provides a text sanitization framework that effectively balances privacy and utility.
+%Our main contributions are summarized as follows:
+
+\noindent
+\textbf{General Framework for Text Sanitization with Parametrizable Privacy. }  
+    We introduce \clusant, a framework for MLDP text sanitization, which can be parametrized by: (1) a clustering of tokens of interest and (2) $k:$ amplification factor which controls cluster embedding. 
+    Our framework's flexibility allows it to define a whole {\em spectrum} of MLDP algorithms to adapt to various text sanitization needs. 
+    We demonstrate how SanText and CusText are special (extremal) cases within this spectrum of \clusant's MLDP framework.
+    % by adjusting parameters to match different algorithms. 
+    % SanText can be described as a special case of \clusant's MLDP algorithm where each cluster contains a single token and uses a metric distance, while CusText employs the same clustering and distance with $k \rightarrow \infty$, effectively selecting the original token's cluster every time.
+
+\vspace{0.5em}
+\noindent
+\textbf{Improved Sensitive Token Set, Utility Metrics, and Extensive Experiments.} 
+Independent of our MLDP framework, we made improvements that can also be applied to the SOTA. In particular, we augment the set of sensitive tokens, improve token embeddings, and utilize more direct metrics and datasets to assess semantic similarity and coherence of sanitized text, providing an accurate reflection of text quality and usability. 
+We apply these improvements to extensively demonstrate the effect of different \clusant parametrizations on the tradeoff between  utility and privacy, through utility improvement over the base case (\clusant parametrized to emulate SanText). We show that under many parametrizations  we can closely match CusText in performance, while still maintaining MLDP guarantees.
+    
+    % \item \textbf{Development of New Utility Metrics:} We propose new metrics developed with the aid of LLMs to assess semantic similarity and coherence of sanitized text. These metrics are designed to provide a more accurate reflection of text quality, and its usability in specific contexts.
+    % \item \textbf{Extensive Experiments: } Our comparative analysis demonstrates that our proposed framework surpasses SanText in utility performance and closely matches CusText in this regard, while simultaneously upholding the same privacy standards as SanText. We also demonstrate the effect of different parametrisations of \clusant on utility.
+    
+    % under previously-used metrics as well as our new proposed metrics.
+%    \item \textbf{Improvement of Privacy and Utility in NLP:} By employing \clusant, we strive to meet strict privacy standards while enhancing the relevance and coherence of sanitized texts. 
+
+
+
+\section{Related Works}
+
+\looseness=-1
+A prevalent strategy for de-identifying text involves identifying and masking sensitive elements, including direct and quasi-identifiers \cite{pilan2022text,presidio}. However, aggressive masking of quasi-identifiers can reduce text utility, affecting coherence and readability. 
+A more advanced approach uses Differential Privacy to replace quasi-identifiers with semantically similar terms. Notable works in this area are SanText \cite{yue2021differential} and CusText \cite{chen2023customized}, which use DP for semantic mapping of sensitive tokens. As these are the SOTA, we describe them in more detail in Sec.~\ref{sec:prelim}.
+% A prevalent strategy for converting text into de-identified versions involves identifying and \textit{masking} sensitive elements, including both direct identifiers and quasi-identifiers \cite{pilan2022text,presidio}. 
+% A limitation of these works and other similar ones is that aggressive masking of quasi-identifiers can significantly diminish the utility of text, particularly affecting its coherence and readability. 
+% A more sophisticated approach involves sanitizing text by replacing quasi-identifiers with semantically similar terms using Differential Privacy.  
+% Two prominent works in this direction are SanText \cite{yue2021differential} and CusText \cite{chen2023customized}, which emphasize the use of DP to achieve semantic mapping of sensitive tokens. As they are the SOTA, we describe them in more detail in Sec.~\ref{sec:prelim}.
+
+%In the work of Yue et al. (2021) \cite{yue2021differential}, their DP methodology (SanText) is characterized by a new local DP notion that uniquely incorporates both sensitivity and similarity considerations promoting a privacy-preserving approach to text sanitization that does not compromise the model’s utility significantly. They introduce a novel approach to Local DP, termed Utility-optimized Metric LDP (UMLDP) based on Metric DP introduced by \cite{alvim2018local}, which optimizes the trade-off of privacy with utility.
+
+
+%While \cite{yue2021differential} offers a strategy for text sanitization based on LDP, it still often fails to strike a satisfactory balance between privacy and utility.  In contrast, a new methodology, termed ``Customized Text'' (CusText), was proposed by Chen et al. in \cite{chen2023customized} to improve the situation. 
+%CusText distinguishes itself through its granular approach to privacy, which involves assigning a customized, semantically similar output cluster of tokens for each input token, thereby enhancing the utility of the sanitized text. However, this method compromises privacy guarantees compared to those offered by SanText. 
+%Specifically, CusText provides privacy only within small, individual clusters, resulting in weaker privacy protections overall. 
+
+\looseness=-1
+A recent work~\cite{tong2023privinfer} proposed RanText, an exponential mechanism-based approach for token replacement, with the goal to produce perturbed prompts for LLMs. 
+% , focusing on further post-processing of sanitized prompts. 
+However, their stated privacy (Theorem 2) is limited to tokens in specific adjacency lists (similar to how CusText's privacy is limited to each clustering), rather than standard MLDP. In fact, since their adjacency lists may not partition tokens (unlike CusText's and \clusant's clusterings), RanText's privacy guarantees are incomparable with those in the \clusant framework.   %Moreover, unlike CusText, which we show is an extremal case (parameter $k \rightarrow \infty$) of \clusant, it is unclear whether RanText can be adapted to achieve MLDP---unlike CusText, RanText's adjacency lists may not partition  tokens. % which is required of \clusant's clustering. 
+%However, unlike CusText, RanText's adjacency lists may not form a partition, making it unclear where the boundaries of DP guarantees apply. While CusText, as we show, is an extremal case (with parameter $k \rightarrow \infty$) of \clusant's MLDP mechanism, it is unclear how to adapt RanText into a standard MLDP mechanism. 
+Consequently, we choose not to experimentally compare with this work at this time.
+% \footnote{Additionally, unlike CusText which, as we show, is an extremal (with parameter $k \rightarrow \infty$) case of \clusant's MLDP mechanism, it is unclear how we can turn RanText into a standard MLDP mechanism---our proof requires that clusters partition the token set, but RanText's adjacency lists may not be a partitioning (see e.g., Fig. 3~\cite{tong2023privinfer}).}. 
+%
+
+
+
+
+
+
+\looseness=-1
+In terms of datasets, SanText and CusText utilize datasets that may be less appropriate for evaluating text sanitization algorithms (see Section~\ref{sec:experiments} for more discussion). 
+Furthermore, the set of sensitive words is identified in an ad-hoc manner by considering words with low frequency in a text collection.
+An important contribution of \cite{pilan2022text} is the introduction of a benchmark dataset called TAB, which is a corpus of 1,268 English-language court cases from the European Court of Human Rights (ECHR), manually annotated with detailed information about sensitive data in each document.
+% , including semantic categories, identifier types, confidential attributes, and co-reference relations.
+We will use this comprehensive dataset for our evaluations in this paper. 
+% This dataset offers advantages over the movie review and medical datasets used by previous works, as detailed in \cite{pilan2022text}.
+
+
+% In this work, we propose new metrics to evaluate the quality of output text in terms of semantic similarity with the original text, coherence, and readability. Our metrics leverage LLM technology, inspired by the approaches in TruEra \cite{TruEraWebsite} and \cite{chiang2023can}, where LLMs are utilized as evaluators to define and assess these criteria. Experiments reported in \cite{chiang2023can} demonstrate that LLMs can match or even surpass the accuracy and consistency of human evaluators in these assessments.
+
+Several works add high-dimensional DP noise to text representations \cite{feyisetan2019leveraging, feyisetan2020privacy, lyu2020differentially, lyu2020towards} or use adversarial training \cite{xie2017controllable, coavoux2018privacy, elazar2018adversarial, li2018towards}. 
+These methods produce non-human-readable outputs for machine learning pipelines, addressing different problems. Like SOTA, we focus on releasing sanitized text for general use rather than private representations.
+
+
+\section{Preliminaries}
+\label{sec:prelim}
+
+Following SOTA, we consider text privatization techniques which replace each token deemed {\em sensitive} in a text by another (possibly the same) token, in a way that preserves metric local differential privacy (MLDP) \cite{alvim2018local}. 
+More formally, we model a {\em text} as a list of {\em tokens}.  
+In an English-language text for example, a {\em token} is a noun, verb, etc.---e.g., `United States' is a single token, even though it consists of two words. 
+%We denote $X$ as a lexicon of tokens. 
+% (all tokens that may appear in texts we are interested in, e.g., all words in an encyclopedia) 
+$X$. %, and the set of texts using the lexicon by $[X]$. 
+We refer to a {\em token sanitization mechanism} as a (randomised) algorithm which takes as input a token and outputs a token which we called the {\em sanitized} token.
+
+Now we give definitions needed for our work. First, in LDP, the privacy guarantee is provided at the level of individual data points (e.g., each token). %, ensuring that the mechanism's output does not significantly depend on any single token.
+
+%\begin{definition}(\(\epsilon\)-Differential Privacy \cite{dwork2006differential})
+%Given a privacy parameter \(\epsilon \geq 0\), for any two adjacent inputs \(x, x' \in X\) and each potential output \(y \in Y\), a randomized mechanism \(M\) satisfies \(\epsilon\)-differential privacy (DP) if it ensures that
+%\(
+%\frac{\Pr[M(x) = y]}{\Pr[M(x') = y]} \leq e^{\epsilon}.
+%\)
+%\end{definition}
+
+
+\begin{definition}(Local Differential Privacy (LDP) \cite{duchi2013local})
+For a given privacy parameter \(\epsilon \geq 0\), a randomized mechanism \(M : X \rightarrow Y\) satisfies \(\epsilon\)-local differential privacy (LDP) if for all pairs of inputs \(x, x' \in X\) and every possible output \(y \in Y\), it holds that
+\(
+\frac{\Pr[M(x) = y]}{\Pr[M(x') = y]} \leq e^{\epsilon}.
+\)
+
+
+\end{definition}
+
+
+Metric DP, as described in \cite{alvim2018local}, extends LDP by tuning privacy with respect to the distance between data points, with the goal of balancing between privacy and utility based on a metric space. 
+Specifically, a mechanism \(M\) satisfies MLDP for a given privacy parameter \(\epsilon \geq 0\) and distance metric \(d : X \times X \rightarrow \mathbb{R}_{\geq 0}\)\footnote{In our case, as $x\in X$ is a token, it is represented as a real vector in $\real^\ell$ for constant $\ell$.}, if the following condition holds for all \(x, x', y \in X\):
+$$
+\Pr[M(x) = y] \leq e^{\epsilon \cdot d(x, x')} \cdot \Pr[M(x') = y].
+$$
+
+% It is this variant of DP that SanText and our work utilizes.
+
+%\begin{definition}\label{def:expmech}(Exponential Mechanism \cite{mcsherry2007mechanism})
+%Given a scoring function \(u : X \times Y \rightarrow \mathbb{R}\), the exponential mechanism (EM) \(M(X, u, Y)\) adheres to \(\epsilon\)-differential privacy when it selects an output token \(y \in Y\) for perturbing the input token \(x \in X\) with a probability proportional to \(e^{\frac{\epsilon \cdot u(x, y)}{2\Delta u}}\), where \(u(x, y)\) represents the score of the output token \(y\) corresponding to the input token \(x\). Additionally, the sensitivity of \(u\) for EM is denoted by \(\Delta u := \max_{y \in Y} \max_{x, x' \in X} |u(x, y) - u(x', y)|\).
+%\end{definition}
+
+
+Lastly, the exponential mechanism has been applied extensively in previous work on token sanitization (e.g., SanText, CusText, RanText). Informally, it selects a sanitized token with probability proportional to its closeness to the original token (with closeness defined via utility function $u$).
+\begin{definition}
+\label{def:expmech}
+[Exponential Mechanism~\cite{mcsherry2007mechanism}]
+    Let $I$ be a finite set denoting the input space, and $O$ be a finite set denoting the output space. 
+    Let $u(x, y)$ be a utility function\footnote{Note, the function $u$ is called a {\em utility function} by convention, but the `utility' of a sanitized text may be defined on completely different metrics; see Experiments Sec.~\ref{sec:experiments}.} defined for any $x\in I$ and $y\in O$, and let $\Delta u \geq 0, \epsilon_E\geq 0$. The exponential mechanism, parametrised by $I, O, u, \Delta u$, runs the following: 
+    $M_E(x)$ (with $x\in I$):
+    % \begin{itemize}
+        % \item 
+        Randomly select $y\in O$, where
+        {\small $$\Pr(M_E(x) = y) = \frac{ \exp(\epsilon_E\cdot u(x, y)/(2\Delta u))}{\sum_{y'\in O}\exp(\epsilon_E\cdot u(x, y')/(2\Delta u))}
+        $$}
+    % \end{itemize}
+\end{definition}
+
+Below are two useful facts about the exponential mechanism, which were used in previous work, as well as in our results.  
+\begin{theorem}[Privacy Guarantees of the Exponential Mechanism~\cite{mcsherry2007mechanism,yue2021differential}]\label{thm:exp_mech_privacy}
+    For exponential mechanism defined in Def.~\ref{def:expmech}, the following hold:
+    \begin{enumerate}
+    \setlength\itemsep{0em}
+
+        \item Fix any $x, x' \in I$ and $y\in O$. Then 
+        $
+            \frac{\Pr(M_E(x) = y)}{\Pr(M_E(x') = y)} \leq \exp\left(\frac{\epsilon_E |u(x, y) - u(x', y)|}{\Delta u}\right)
+        $
+        \item If $\Delta u = \max\left(|u(x, y) - u(x', y)| \right)$ (called {\em sensitivity} of $u$) then $M_E$ is $\epsilon$-LDP. If $\Delta u = 1$ and $u(x,y) = -d(x,y)$ for a metric $d$, then $M_E$ is $\epsilon$-MLDP.
+    \end{enumerate}
+\end{theorem}
+
+\subsection{Notation}
+%\clusant presents a privacy-utility\footnote{Note, `utility' in the tradeoff are the metrics used to evaluate sanitized texts, not to be confused with the `utility function' from the exponential mechanism.} tradeoff between the SOTA, SanText and CusText. 
+For ease of reading, we standardize the notation used to describe these previous works. 
+\begin{itemize}
+\setlength\itemsep{0em}
+    \item $X$: a lexicon, set of all tokens within texts of interest. We consider each token as being represented by a real vector $\mathbb{R}^\ell$ for some constant $\ell$ (this mapping from token to vector is called a {\em token embedding}).
+%    \item $[X]$: set of all texts (a text is a list of tokens) 
+    \item $X'$: a set of sensitive tokens. We usually name sensitive tokens as $x, x'$. $X'$ can be a subset of $X$, but it does not need to be. 
+    For experiments, we use an initial smaller set of sensitive tokens from $X$ as seeds, which we then expand several-fold with additional words of a similar nature. For instance, if `British' is a seed token, we may add `French' and `German', even if they were not initially in $X$. %(but not, for example, `Britain', since it  category). 
+    \item $y\in Y$:  output of the token sanitization mechanism. Previous work differ in set $Y$; in the interest of fairness and ease of presentation, we set $Y = X'$ in all experiments. 
+    \item $u$: utility function; $\Delta u$: sensitivity of $u$ 
+    (Exponential Mechanism Def.~\ref{def:expmech})
+%    \item $d$: distance function between two tokens 
+    % (e.g., Euclidean)
+%    \item $T:[X] \rightarrow [Y]$: text sanitization mechanism
+    \item $M:X' \rightarrow Y$: token sanitization mechanism 
+\end{itemize}
+%$T$ is based on $M$, applying it to every sensitive token in a given text. So, we will focus exclusively on $M$ in our further discussion.
+
+
+\paragraph{SanText~\cite{yue2021differential}}
+
+In SanText,
+the token sanitization mechanism $M:X' \rightarrow X'$ is  based on the exponential mechanism (Def.~\ref{def:expmech}), with a modification that the utility function sensitivity \( \Delta u \) is replaced by the constant~\( 1 \) (see Thm.~\ref{thm:exp_mech_privacy}). The utility function is defined as $u(x, x') = -d(x, x')$, where $d(x, x')$ is a metric distance (e.g., Euclidean) between the real-vector embeddings of tokens $x, x'$. We formalize this mechanism in the Appendix.
+SanText achieves the following privacy guarantee.
+
+\begin{theorem}[Privacy of SanText]
+    The token sanitization mechanism \( M \) of SanText, satisfies \( \epsilon \)-MLDP.
+\end{theorem}
+
+% \begin{corollary}\label{cor:santext_ldp}
+%     Let \( \Delta u \) represent the sensitivity of the utility function \( u \) in the SanText mechanism. Then, \( M \) upholds \( \epsilon \cdot \Delta u \)-LDP.
+% \end{corollary}
+
+We note that SanText+ is another mechanism introduced in the same paper~\cite{yue2021differential}. However, SanText+ sanitizes non-sensitive tokens as well as sensitive ones; thus, for fairness in utility comparisons (as sanitizing more tokens lowers the text utility), we focus on SanText. 
+
+\paragraph{CusText~\cite{chen2023customized}}
+\label{sec:custext}
+
+CusText improves the utility of SanText by first partitioning all tokens in the lexicon $X$ into disjoint sets called {\em clusters} based on token similarity. 
+Then, given a fixed set of clusters, CusText performs exponential mechanism (Def.~\ref{def:expmech}) within each cluster. 
+
+
+Since CusText only ever replaces $x$ with tokens in the cluster containing $x$, CusText's privacy applies only within each cluster. 
+
+\begin{theorem}[Privacy of CusText]
+Let $C$ be a cluster. 
+Let $M_{C}:C \rightarrow C$ be the mechanism $M$ defined above, but with domain and range restricted to cluster $C$. Then $M_{C}$ satisfies $\epsilon$-LDP.
+\end{theorem}
+
+However, CusText's mechanism $M$ does not in general satisfy (metric) LDP, when there is more than one cluster.
+
+\begin{theorem}[Proof in Appendix] \label{custext_priv}
+Let $X$ be the lexicon and $X'$ be any set of sensitive tokens. For any clustering with at least two clusters, the mechanism $M:X' \rightarrow X$ defined in CusText cannot satisfy $\epsilon$-(metric) LDP for any $\epsilon\in \mathbb{R}$.
+\end{theorem}
+
+
+
+
+
+
+
+
+
+\input{clusant_section}
+
+
+
+
+
+
+
+
+\section{Experiments}
+\label{sec:experiments}
+
+
+\looseness=-1
+Previous research \citep{feyisetan2020privacy, yue2021differential, chen2023customized} has evaluated the quality of sanitized text based on the performance of downstream tasks (e.g., sentiment analysis) on sanitized text. 
+In this work, we evaluate the quality of sanitized text using more direct metrics that capture the semantic integrity and linguistic naturalness of sanitized text.
+
+\paragraph{Metrics and Dataset}
+We evaluate sanitized text with two primary metrics: semantic similarity and perplexity, along with four additional metrics assessing common sense, coherence, cohesiveness, and grammar quality, using GPT-4o.
+
+\textit{Semantic similarity} is measured using embedding vectors from the all-MiniLM-L6-v2 (sentence embedder) model\footnote{\url{https://docs.trychroma.com/guides/embeddings}}. 
+We compute cosine similarity between embeddings of original and sanitized texts to assess semantic preservation.
+
+\looseness=-1
+\textit{Perplexity} measures the naturalness of the sanitized text by evaluating how well it aligns with typical language patterns, with lower perplexity indicating more natural text (higher probability). We use GPT-2 to obtain the perplexity of sanitized texts.
+
+Additionally, we use GPT-4o to evaluate grammar quality, common sense, coherence, and cohesiveness. This approach leverages the capabilities of large language models (LLMs) as judges in assessing these metrics. Experiments in various NLP evaluations (e.g., RAG technology) have shown that LLMs can match or surpass human evaluators in accuracy and consistency for these assessments \cite{chiang2023can, yu2024evaluation}. We show the prompts for obtaining these scores in Appendix. 
+
+We utilize the Text Anonymization Benchmark (TAB) dataset \citep{pilan2022text}, which includes 1,268 annotated English-language court cases from the European Court of Human Rights. This dataset offers a robust framework for evaluating general-purpose text anonymization, with high-quality annotations and diverse content.
+
+
+
+
+
+
+% \looseness=-1
+% Previous research \citep{feyisetan2020privacy, yue2021differential, chen2023customized} has utilized evaluation metrics such as sentiment analysis, Pearson correlation in medical datasets, and accuracy in QNLI-based question-answering tasks to assess text sanitization utility. However, these metrics may not fully capture the effectiveness of text sanitization in preserving semantic integrity and linguistic naturalness.
+
+% \paragraph{Proposed Metrics and Dataset}
+% We propose evaluating sanitized text using two different metrics: semantic similarity between the original and sanitized texts, and perplexity to measure the naturalness of the sanitized text.
+
+% \looseness=-1
+% We measure \textit{semantic similarity} using embedding vectors generated by the all-MiniLM-L6-v2 model (\url{https://docs.trychroma.com/guides/embeddings}), a simple and fast sentence embedder designed to handle long phrases and provide good contextual representations. Although more sophisticated and larger embedding models exist, we chose MiniLM-L6-v2 for its simplicity, popularity, and processing speed, which has made it the default embedder in several packages, including Chroma DB, a popular vector database.
+% Specifically, 
+% for each text, we obtain an embedding vector representation for both the sanitized text and the original text. 
+% We then compute the cosine similarity between these two embedding vectors to quantify how well the essential semantic content is preserved post-sanitization. This helps us determine how effectively the sanitized text maintains the meaning of the original text.
+
+% \textit{Perplexity} is a measure of how well the sanitized text aligns with typical language patterns. It is inversely correlated with the probability of a piece of text being generated or existing in a given language. We use the GPT-2 model for this purpose. The formula for perplexity is given by:
+% \[
+% \text{Perplexity}(P) = 2^{-\frac{1}{N} \sum_{i=1}^{N} \log_2 P(w_i)}
+% \]
+% where \(P(w_i)\) is the probability of the \(i\)-th word in the text. Lower perplexity indicates higher probability and, thus, more naturalness. This metric effectively quantifies the naturalness of the sanitized outputs, indicating how seamlessly they integrate into conventional linguistic usage.
+
+% Compared to metrics like sentiment analysis used in SST-2, a popular movie reviews dataset for sentiment analysis, Pearson correlation in MedSTS, a medical dataset, and QNLI for question answering \citep{feyisetan2020privacy, yue2021differential, chen2023customized}, our proposed metrics offer a more generalizable and directly relevant evaluation of text sanitization.
+
+% Sentiment analysis, while useful for gauging emotional tone, is not applicable to non-consumer texts such as technical or legal documents. Similarly, 
+% Pearson correlation of term occurrence
+% % , although effective in measuring linear relationships in semantic similarity scores, 
+% does not capture the impacts of text sanitization when considering context in the way an LLM does when producing vector embeddings for a passage of text. 
+% Regarding QNLI, which focuses on determining if one sentence logically follows from another, it primarily evaluates binary textual entailment.
+% This narrow focus might miss broader alterations in sanitized texts that affect more than just logical sequences, making it less suitable for assessing the naturalness of text sanitization across various content types.
+
+
+% Furthermore, the dataset we utilize, the well-established Text Anonymization Benchmark (TAB) dataset, introduced by \citet{pilan2022text}, provides a robust framework for evaluating text anonymization techniques. 
+% The TAB dataset comprises 1,268 English-language court cases from the European Court of Human Rights (ECHR), enriched with comprehensive annotations about the personal information appearing in each document. 
+% % These annotations include the semantic category, identifier type, confidential attributes, and co-reference relations of the personal information. 
+% Sensitive words and phrases within the dataset have been carefully marked by human annotators, producing high-quality annotations for evaluation. This contrasts with SanText and CusText, which construct the set of sensitive words in an ad-hoc manner by only considering the top least frequent words in a collection.
+% Also, unlike movie-review and medical datasets, the TAB corpus's diversity makes it an ideal benchmark for assessing the effectiveness of general-purpose text anonymization methods. The TAB dataset is designed to go beyond traditional de-identification, which is limited to detecting predefined semantic categories, by explicitly marking \textit{text spans} that should be masked to conceal the identity of individuals.
+
+
+
+
+\paragraph{Experimental Methodology}
+In our experiments, we use the CusText clustering method from~\cite{chen2023customized}. This is a simple clustering method: given a set of tokens \(X\) to cluster, it randomly picks a token \(x\), creates a cluster \(C_x\), and inserts into \(C_x\) the top \(h-1\) tokens similar to \(x\) from \(X\), simultaneously removing them from \(X\). This process is repeated until \(X\) is empty, resulting in each cluster containing exactly \(h\) tokens. While this simple clustering method can be improved, the choice of clustering method is orthogonal to our work. By varying \(h\), we can control the size and number of clusters. In our study, we test with 40, 180, 360, and 720 clusters.
+
+\paragraph{Augmented Token Set} We  improve upon previous approaches like SanText and CusText by augmenting the set of sensitive words and phrases, making it more realistic and contextual. We consider the set $X'$ as all sensitive words or phrases from the TAB dataset, supplemented with 100 words/phrases of similar nature for each using GPT-4. For example, for ``Sinn Fein headquarters,'' we obtained phrases of similar nature like ``Labour Party headquarters,'' ``Conservative Party headquarters,'' etc., rather than only similar terms like ``Irish'' which, while similar in vector embedding space, are not of the same nature. This approach extends the set of sensitive words to include additional, realistic phrases not originally in a text collection but still sensitive.
+% Our experimental methodology improves upon previous approaches like SanText and CusText by augmenting the set of sensitive words and phrases, making the approach more realistic and contextual. 
+% Namely, we consider the set $X$ as the set of all sensitive words or phrases from the TAB dataset, supplemented with 100 similar words/phrases for each word in $X$ generated using GPT-4o. For instance, when specifying a location such as ``Sinn Fein headquarters,'' we obtained 100 similar phrases like ``Labour Party headquarters,'' ``Conservative Party headquarters,'' ``Liberal Democrats headquarters,'' ``Green Party headquarters,'' and so on. 
+% This approach extends the set of sensitive words to include additional, realistic terms that were not originally identified but are still sensitive.
+% This way we extend the set of sensitive words obtaining a more comprehensive and realistic set containing words which were not in the original set but are sensitive nevertheless.
+In contrast, SanText and CusText recognizing the limitations of a restricted set of sensitive words, attempt to mitigate this by allowing replacements with non-sensitive words. 
+However, this method often leads to replacements that do not always make sense. 
+For example, replacing ``Sinn Fein headquarters'' with a non-sensitive word, such as ``Irish'' 
+% (which happens to be an adjective rather than noun clause) 
+can render the text nonsensical. 
+
+\paragraph{Multi-word Embeddings} SanText and CusText rely on single-word embeddings like GloVe \cite{pennington2014glove}, which cannot directly handle multi-word phrases such as ``Sinn Fein headquarters.'' Our approach, on the other hand, employs the all-MiniLM-L6-v2 sentence embedder, designed to handle phrases and provide more accurate contextual representations. 
+% By using a sentence embedder, we capture contextual relationships within phrases, allowing for better replacements that maintain the text's integrity and relevance. 
+%
+In our experiments, we ensure fairness for SanText and CusText by using the same set $X'$ of words/phrases for replacement
+and the same token embedder, all-MiniLM-L6-v2. 
+% Specifically, we use the augmented set $X'$ for SanText replacements and maintain the same clustering of $X'$ for CusText as we do for \clusant.
+% Additionally, we use the same embedder, all-MiniLM-L6-v2, for all methods.
+Finally, we use Euclidean distance for all methods. 
+% Since the token embeddings are normalized, it can be shown that Euclidean distance is proportional to cosine distance (see Appendix). 
+
+
+
+
+
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=7cm]{latex/fig/heatmap_semantic_sim_2.pdf}
+    \caption{Semantic similarity improvement over SanText (\%). \clusant abbreviated by CST, CusText by CT. Horizontal axis varies parameter $k$ of \clusant. Vertical axis varies the number of clusters. Same axes apply for the other heatmaps as well. Unless otherwise mentioned, the higher, the better.}
+    \label{fig:semsim_2}
+\end{figure}
+
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=7cm]{latex/fig/heatmap_perplexity_2.pdf}
+    \caption{Peplexity improvement over SanText (\%); the lower, the better}
+    \label{fig:perplexity_2}
+\end{figure}
+
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=7cm]{latex/fig/heatmap_common_sense_2.pdf}
+    \caption{Common sense improv. over SanText (\%)}
+    \label{fig:common_sense_2}
+\end{figure}
+
+
+\begin{figure}
+    \centering
+    \includegraphics[width=7cm]{latex/fig/heatmap_coherence_2.pdf}
+    \caption{Coherence improvement over SanText (\%)}
+    \label{fig:coherence_2}
+\end{figure}
+
+
+
+
+
+
+
+
+
+
+\paragraph{Numerical Results}
+We show partial experimental results, in Figures~\ref{fig:semsim_2}, \ref{fig:perplexity_2}, \ref{fig:common_sense_2}, \ref{fig:coherence_2} 
+and full results in Figures~\ref{fig:semsim}, \ref{fig:perplexity}, \ref{fig:grammar}, \ref{fig:common_sense}, \ref{fig:coherence}, \ref{fig:cohesiveness} in the Appendix. 
+The figures show improvements achieved by \clusant in terms of semantic similarity, perplexity, common sense, coherence, cohesiveness, and grammar over SanText. 
+For all metrics except perplexity, higher scores are better, while for perplexity, lower scores are preferred.
+We abbreviate \clusant by CST and CusText by CT. We consider CT and a special version of \clusant where $k=\infty$.
+
+We plotted the number of clusters on the vertical axis and the centroid pushing factor $k$ of \clusant on the horizontal axis, creating heatmaps for each $\epsilon$ value considered: 0.5, 1, 2, 4, 8, 16. Due to space constraints, we only show results for $\epsilon=1$ and $\epsilon=8$ here and include the rest in the Appendix. For all $\epsilon$ values, as $k$ increases (moving right in the maps), the semantic similarity improvement (over SanText) increases. Additionally, as the number of clusters increases (moving down), semantic similarity improvement also increases.
+
+The most significant improvement of \clusant over SanText is observed for $\epsilon = 8$ and 720 clusters. Generally, the more clusters used, the greater the improvement over SanText. For $\epsilon = 16$, the improvement in semantic similarity for \clusant over SanText is not as pronounced as for $\epsilon = 8$. This is because, while the semantic similarity of sanitized text to the original text for \clusant approaches 1 for this $\epsilon$ (the highest value possible, being a cosine similarity), the semantic similarity for SanText also increases for larger $\epsilon$ values, resulting in a slightly reduced improvement margin.
+
+\looseness=-1
+Similar trends are observed for perplexity, common sense, and coherence, as well as for grammar and cohesiveness (detailed in Appendix). As the number of clusters and $k$ increase, \clusant's performance improves significantly over SanText, approaching that of CusText. While CusText shows better performance across metrics, it is only marginally better than \clusant. However, this comes at the cost of weaker privacy guarantees.
+% , as explained previously.
+We note that these metrics represent general trends; as LLM judgments can be noisy, smaller $k$ values occasionally yield better results.
+
+
+
+
+\section{Conclusion}
+We introduced \clusant, a novel framework for text sanitization that achieves metric local differential privacy (MLDP). % that addresses the need for effective privacy-preserving methods in text processing. 
+\clusant comprises token clustering and token sanitization, leveraging Large Language Models to generate substitute tokens, which are then clustered, and sanitized using a MLDP algorithm.
+Our MLDP framework encompasses, and gives a range of privacy-utility tradeoffs via tuneable parameters,  between state-of-the-art algorithms  SanText and CusText. % under specific parameters, balancing the privacy-utility tradeoff. 
+This enables \clusant's users to achieve strong privacy or high utility as required. 
+Our framework's privacy guarantees are agnostic to the clustering algorithm, allowing for plug-and-play (and future optimization) of %privacy guarantees are independent of the clustering method, allowing 
+this component in our framework. 
+%Future work can optimize these algorithms to enhance \clusant's performance further. 
+In summary, \clusant advances the area of privacy-preserving text processing, 
+offering a robust, tuneable solution for handling sensitive text. % across diverse contexts.
+
+% Our framework's privacy guarantees are independent of the clustering method, allowing for various clustering algorithms. Future work can optimize these algorithms to enhance \clusant's performance further. Overall, \clusant advances privacy-preserving text processing, offering a robust solution for handling sensitive data across diverse contexts.
+
+
+% \section{Conclusions}
+% We introduced \clusant, a novel framework for text sanitization that addresses the need for effective privacy-preserving methods in text processing. 
+% Our framework consists of two key components: token clustering and token sanitization. 
+% By leveraging Large Language Models (LLMs) to create a set of potential substitute tokens, we then meaningfully cluster these tokens and utilize a metric LDP algorithm to sanitize sensitive tokens within the text.
+
+% Our (M)LDP algorithm's flexibility allows it to emulate existing state-of-the-art (SOTA) algorithms like SanText and CusText under specific parameter settings. This adaptability facilitates the privacy-utility tradeoff, enabling \clusant to achieve either strong privacy similar to SanText or high utility akin to CusText, depending on the chosen parameters.
+
+% To rigorously benchmark \clusant, we used evaluation metrics that focus on semantic similarity and language naturalness. 
+% Our experimental results demonstrate that \clusant offers a sensible balance between privacy and utility.
+
+% We emphasize that the privacy guarantees of our token sanitization algorithm are agnostic to the clustering algorithm, allowing for flexible plug-and-play of different clustering methods. Future work may explore optimizing clustering algorithms to further enhance \clusant's performance in various application domains. Overall, we believe \clusant represents a significant advancement in the field of privacy-preserving text processing, offering a promising solution for handling sensitive data across diverse textual contexts.
+
+
+
+
+
+% \newpage
+
+
+\newpage
+\section*{Limitations}
+
+\begin{itemize}
+\setlength\itemsep{0em}
+    \item We inherit some limitations of SanText/CusText. In particular, sanitizing a text by sanitizing individual tokens can lead to mistakes. For example, when a token has two different meanings in different contexts, the token sanitization may not know which meaning it should take. Moreover, replacing individual sensitive tokens directly may lead to some logical inconsistencies. For example, `London, Ontario' (city in Canada) may be sanitized to `Bristol, Saskatchewan' (not a real city).  
+    We believe that our framework can be improved in followup works by considering token context in our clustering and text sanitization. 
+    \item While we improved the sensitive token set and multi-word embedding in our framework, we tested only one clustering method (that of CusText's), and experimented primarily using Euclidean and cosine distances (in line with SanText/CusText). A future direction is to enrich our framework by exploring and comparing other clustering methods and distances metrics in the future. %While \clusant's privacy guarantees works for any clustering method, we believe that having a good clustering is essential for good utility. We plan to experiment with other clustering methods in future work.
+    \item We utilized direct metrics to measure the utility of the sanitized text. %, as opposed to previous work that measured performance in specific downstream tasks. 
+    This approach allowed for a more straightforward and transparent comparison of \clusant with previous methods. In follow-up works, we plan apply our approach to specific downstream tasks.
+\end{itemize}
+
+% From: \url{https://aclrollingreview.org/cfp#long-papers}
+
+% Limitations (required section)
+% Authors are required to discuss the limitations of their work in a dedicated section titled “Limitations”. This section should be included at the end of the paper, before the references, and it will not count toward the page limit. This includes both, long and short papers. Papers without a limitations section will be desk rejected. Note, prior to the December 2023 cycle, this was optional.
+
+
+
+
+
+
+
+
+\bibliography{privacylm}
+
+
+% Bibliography entries for the entire Anthology, followed by custom entries
+%\bibliography{anthology,custom}
+% Custom bibliography entries only
+% \bibliography{custom}
+
+\appendix
+
+\input{latex/appendix}
+
+\end{document}
