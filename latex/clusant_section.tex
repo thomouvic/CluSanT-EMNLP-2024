@@ -24,7 +24,7 @@ For now, we assume we already have a set of token clusters $\{C\}$.
     \item Mapping $f'$ between clusters and real vectors is called a {\em cluster embedding}.
     \item $\{C\}$: A clustering, a set of subsets $C$ ({\em clusters}) partitioning $X'\cup Y$ (or $X'$ if $Y = X'$).  $C_x$ is the (unique) cluster  containing token $x$.
     %\item $C_x$: Cluster that includes token $x$we sometimes overload notation and also use this to denote the centroid of the cluster $C_x$, computed with respect to a cluster embedding (Def.~\ref{def:d_c}). Note that since clusters partition $X'$, there always exists a unique $C_x$ for each $x \in X'$.
-    \item $d_c: \mathbb{R}^\ell \times \mathbb{R}^\ell \rightarrow \mathbb{R}$: Any distance function that is a metric. We extend this to measure the distance between clusters, i.e., given cluster embedding $f'$, $d_c(C, C') = d_c\left(f'(C),\ f'(C') \right)$ for clusters $C, C'$.
+    \item $d_c: \mathbb{R}^\ell \times \mathbb{R}^\ell \rightarrow \mathbb{R}$: Any distance function that is a metric. We extend this to measure the distance between clusters, i.e., $d_c(C, C') = d_c\left(f'(C),\ f'(C') \right)$ for clusters $C, C'$.
     \item $d: \mathbb{R}^\ell \times \mathbb{R}^\ell \rightarrow \mathbb{R}$: Any distance measure (which is not assumed to be a metric, and may be different from $d_c$) between two tokens.
 \end{itemize}
 
@@ -224,19 +224,19 @@ $M(x)$:
 %We formalize our privacy statement below.
 
 \begin{theorem}\label{thm:clusant_mldp}
-    Suppose $d_c$ and $k$ are chosen so that: 
+    Consider $d_c$, $f$, $k$, and the clustering are chosen s.t.: 
     \begin{itemize}
     \setlength\itemsep{0em}
     \item $d_c$ is a metric.
-    \item For all $C_x\not = C_x'$, (1) $d_c(x, x') \geq 1$, and (2) %if $C_x \not= C_{x'}$, 
+    \item For all $x, x'$ (token embeddings using $f'$) such that $C_x\not = C_{x'}$, (1) $d_c(x, x') \geq 1$, and (2) 
     $d_c(C_x, C_{x'}) + 1 \leq 2\cdot d_c(x, x')$.  \footnote{For (1): 
     %if $C_x = C_{x'}$ this can be satisfied by assuming $d_c(x, x') \geq 1$. Otherwise, 
-    If $C_x \not= C_{x'}$ then we can choose $k$ large enough so that $d_c(x, x') \geq 1$. For (2) this can be satisfied by choosing a large enough $k$ (intuitively, if $k$ is large then the distance $d_c(x, x')$ becomes large).}
+    If $C_x \not= C_{x'}$ then we can choose $k$ large enough so that $d_c(x, x') \geq 1$ for embedding $f'$. For (2) this can be satisfied by choosing a large enough $k$ (intuitively, if $k$ is large then the distance $d_c(x, x')$ becomes large).}
 \end{itemize}
 
 
 
-  Then, $M(x)$ in Fig.~\ref{fig:clusant_metricldp}  achieves $\epsilon$-metric LDP for the distance $d_c$ defined above.
+  Then, $M(x)$ in Fig.~\ref{fig:clusant_metricldp}  achieves $\epsilon$-metric LDP for metric $d_c$, and embedding $f'$.
 \end{theorem}
 
 % \begin{proof}
@@ -248,12 +248,12 @@ Thus, consider $x \not= x'$.
 We have $\Pr(M(x) = y)$ equal to $\Pr(M_1(x) = C_y)\Pr(M_2(x) = y | M_1(x) = C_y)$ where (1) $M_1(x) = C_y$ is the event that Step 1 of $M$ chooses $C_y$, and (2) $M_2(x) = y | M_1(x) = C_y$ is the event that Step 2 of $M'$ chooses token $y$, given Step 1 chooses $C_y$. 
 
 
-Now, conditioned on  Step 1 choosing cluster $C_y$, Step 2 is simply the exponential mechanism with privacy $\epsilon/2$. Thus, $\frac{\Pr(M_2(x) = y | M_1(x) = C_y)}{\Pr(M_2(x') = y | M_1(x') = C_y)} \leq e^{\epsilon/2}.$ Moreover, $\Pr(M_1(x) = C_y)/\Pr(M_1(x') = C_y) \leq \exp(\frac{\epsilon}{2} |d_c(C_x, C_y) - d_c(C_{x'} - C_y)|)$ by Thm.~\ref{thm:exp_mech_privacy}. Thus
+Now, conditioned on  Step 1 choosing cluster $C_y$, Step 2 is simply the exponential mechanism with privacy $\epsilon/2$. Thus, $\frac{\Pr(M_2(x) = y | M_1(x) = C_y)}{\Pr(M_2(x') = y | M_1(x') = C_y)} \leq e^{\epsilon/2}.$ Moreover, $\Pr(M_1(x) = C_y)/\Pr(M_1(x') = C_y) \leq \exp(\frac{\epsilon}{2} |d_c(C_x, C_y) - d_c(C_{x'}, C_y)|)$ by Thm.~\ref{thm:exp_mech_privacy}. Thus
 
 %Since $\Delta u_c$ in Step 1. of $M'(x)$ is set to $\Delta u_c = 1$, and Step 2. remains the same as that of $M$, then we have that:
 \begin{align*}
-        \frac{\Pr(M(x) = y)}{\Pr(M(x') = y)} & \leq e^{\frac{\epsilon}{2} |d_c(C_x, C_y) - d_c(C_{x'} - C_y)|} e^{\frac{\epsilon}{2}}\\
-        &= e^{\frac{\epsilon}{2}(|d_c(C_x, C_y) - d_c(C_{x'} - C_y)| +1)}
+        \frac{\Pr(M(x) = y)}{\Pr(M(x') = y)} & \leq e^{\frac{\epsilon}{2} |d_c(C_x, C_y) - d_c(C_{x'}, C_y)|} e^{\frac{\epsilon}{2}}\\
+        &= e^{\frac{\epsilon}{2}(|d_c(C_x, C_y) - d_c(C_{x'},  C_y)| +1)}
 \end{align*}
 
 %We first prove two simple facts about $d_c$: \\
@@ -274,11 +274,11 @@ Given that $d'$ is a metric, for all $C_x, C_{x'}, C_y$
 Now consider the following two cases:
 \begin{enumerate}
 \setlength\itemsep{0em}
-    \item $C_x = C_{x'}$: Then, $|d_c(C_x, C_y) - d_c(C_{x'} - C_y)| = 0$ and $$e^{\frac{\epsilon}{2}(|d_c(C_x, C_y) - d_c(C_{x'} - C_y)| +1)} \leq e^\epsilon \leq e^{\epsilon\cdot d_c(x, x')}$$ 
-    \item $C_x \not= C_{x'}$: We showed above that  $|d_c(C_x, C_y) - d_c(C_{x'} - C_y)| \leq d_c(C_x, C_{x'})$. Moreover, by assumption, for $C_x \not= C_x'$, $d_c(C_x, C_{x'}) + 1 \leq 2\cdot d_c(x, x')$. 
+    \item $C_x = C_{x'}$: Then, $|d_c(C_x, C_y) - d_c(C_{x'}, C_y)| = 0$ and $$e^{\frac{\epsilon}{2}(|d_c(C_x, C_y) - d_c(C_{x'},C_y)| +1)} \leq e^\epsilon \leq e^{\epsilon\cdot d_c(x, x')}$$ 
+    \item $C_x \not= C_{x'}$: We showed above that  $|d_c(C_x, C_y) - d_c(C_{x'}, C_y)| \leq d_c(C_x, C_{x'})$. Moreover, by assumption, for $C_x \not= C_x'$, $d_c(C_x, C_{x'}) + 1 \leq 2\cdot d_c(x, x')$. 
     Thus, 
     \begin{align*}
-        e^{\frac{\epsilon}{2}(|d_c(C_x, C_y) - d_c(C_{x'} - C_y)| +1)} &\leq e^{\frac{\epsilon}{2}(2\cdot d_c(x, x'))}\\
+        e^{\frac{\epsilon}{2}(|d_c(C_x, C_y) - d_c(C_{x'}, C_y)| +1)} &\leq e^{\frac{\epsilon}{2}(2\cdot d_c(x, x'))}\\
         &=e^{\epsilon\cdot d_c(x, x')}
     \end{align*} 
 \end{enumerate}
@@ -295,4 +295,5 @@ Now consider the following two cases:
 \vspace{0.5em}
 
 \noindent
-\textbf{CusText.} \clusant can be parametrized to {\em asymptotically} approach the behaviour of CusText, which always chooses a token from an `optimal' cluster. We first define the clustering and distance $d$ to be the same as CusText's, setting $d_c$ as Euclidean, and letting $k \rightarrow \infty$. When $k \rightarrow \infty$, the distance $d_c$ between embeddings of different clusters are infinitely far (infinitely large), and Step 1 of Fig.~\ref{fig:clusant_metricldp} will with overwhelming probability choose the cluster $C_x$ of the original token~$x$.
+\textbf{CusText.} \clusant can be parametrized to {\em asymptotically} approach the behaviour of CusText, which always chooses a token from an `optimal' cluster. We first define the clustering and distance $d$ to be the same as CusText's, setting $d_c$ as Euclidean, and letting $k \rightarrow \infty$. 
+When $k \rightarrow \infty$, the distance $d_c$ between $f'$ embeddings of different clusters is infinitely large, and Step 1 of Fig.~\ref{fig:clusant_metricldp} will with overwhelming probability choose the cluster $C_x$ of the original token~$x$.

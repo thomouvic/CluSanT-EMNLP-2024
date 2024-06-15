@@ -163,7 +163,7 @@ Though improving utility, this approach also limits CusText's privacy guarantees
 %Following  SOTA approaches, \clusant performs text sanitization by treating a text as a list of tokens, replacing sensitive ones in a privacy (MLDP)-preserving manner.  %then going through this list, either replacing it if the token is deemed {\em sensitive}, or otherwise leaving the token alone. 
 % The resulting sanitized text is thus the original text, with the sensitive words replaced (in the case of \clusant, via a (LDP) mechanism which we will call a {\em token sanitization} algorithm). 
 Notably, while \clusant's token sanitization algorithm is based on various parameters, %set of tokens being clustered according to their similarity, a notable feature of interest in \clusant is that
-it achieves MLDP guarantees (Thm.~\ref{thm:clusant_mldp}) for any chosen parameters, allowing for flexible plug-and-play. 
+it achieves MLDP guarantees (Thm.~\ref{thm:clusant_mldp}) for any valid parameters, allowing for flexible plug-and-play. 
 % ---determining the best clustering for a specific application is an interesting future direction.  
 We outline our general approach through the following main technical challenges.
 
@@ -284,8 +284,11 @@ We use this comprehensive dataset for our evaluations in this paper.
 
 % In this work, we propose new metrics to evaluate the quality of output text in terms of semantic similarity with the original text, coherence, and readability. Our metrics leverage LLM technology, inspired by the approaches in TruEra \cite{TruEraWebsite} and \cite{chiang2023can}, where LLMs are utilized as evaluators to define and assess these criteria. Experiments reported in \cite{chiang2023can} demonstrate that LLMs can match or even surpass the accuracy and consistency of human evaluators in these assessments.
 
-Several works add high-dimensional DP noise to text representations \cite{feyisetan2019leveraging, feyisetan2020privacy, lyu2020differentially, lyu2020towards} or use adversarial training \cite{xie2017controllable, coavoux2018privacy, elazar2018adversarial, li2018towards}. 
-These methods produce non-human-readable outputs for machine learning pipelines, addressing different problems. Like SOTA, we focus on releasing sanitized text for general use rather than private representations.
+
+Several works add 
+% high-dimensional 
+DP noise to text representations \cite{feyisetan2019leveraging, feyisetan2020privacy, lyu2020differentially, lyu2020towards} or use adversarial training \cite{xie2017controllable, coavoux2018privacy, elazar2018adversarial, li2018towards} to create these representations.
+These methods produce non-human-readable outputs for ML pipelines, addressing different problems. Like SOTA, we produce sanitized text for general use rather than private representations.
 
 
 \section{Preliminaries}
@@ -494,12 +497,12 @@ We utilize the Text Anonymization Benchmark (TAB) dataset \citep{pilan2022text},
 \paragraph{Experimental Methodology}
 In our experiments, we use the CusText clustering method from~\cite{chen2023customized}. This is a simple clustering method: given a set of tokens \(X\) to cluster, it randomly picks a token \(x\), creates a cluster \(C_x\), and inserts into \(C_x\) the top \(h-1\) tokens similar to \(x\) from \(X\), simultaneously removing them from \(X\). This process is repeated until \(X\) is empty, resulting in each cluster containing exactly \(h\) tokens. While this simple clustering method can be improved, the choice of clustering method is orthogonal to our work. By varying \(h\), we can control the size and number of clusters. In our study, we test with 40, 180, 360, and 720 clusters.
 
-\paragraph{Augmented Token Set} We  improve upon previous approaches like SanText and CusText by augmenting the set of sensitive words and phrases, making it more realistic and contextual. We consider the set $X'$ as all sensitive words or phrases from the TAB dataset, supplemented with 100 words/phrases of similar nature for each using GPT-4. For example, for ``Sinn Fein headquarters,'' we obtained phrases of similar nature like ``Labour Party headquarters,'' ``Conservative Party headquarters,'' etc., rather than only similar terms like ``Irish'' which, while similar in vector embedding space, are not of the same nature. This approach extends the set of sensitive words to include additional, realistic phrases not originally in a text collection but still sensitive.
+\paragraph{Augmented Token Set} We  improve upon previous approaches like SanText and CusText by augmenting the set of sensitive words and phrases, making it more realistic and contextual. We consider the set $X'$ as all sensitive words or phrases from the TAB dataset, supplemented with 100 words/phrases of similar nature for each using GPT-4o. For example, for ``Sinn Fein headquarters,'' we obtained phrases of similar nature like ``Labour Party headquarters,'' ``Conservative Party headquarters,'' etc., rather than only similar terms like ``Irish'' which, while similar in vector embedding space, are not of the same nature. This approach extends the set of sensitive tokens to include additional, realistic phrases not originally in a text collection but still sensitive.
 % Our experimental methodology improves upon previous approaches like SanText and CusText by augmenting the set of sensitive words and phrases, making the approach more realistic and contextual. 
 % Namely, we consider the set $X$ as the set of all sensitive words or phrases from the TAB dataset, supplemented with 100 similar words/phrases for each word in $X$ generated using GPT-4o. For instance, when specifying a location such as ``Sinn Fein headquarters,'' we obtained 100 similar phrases like ``Labour Party headquarters,'' ``Conservative Party headquarters,'' ``Liberal Democrats headquarters,'' ``Green Party headquarters,'' and so on. 
 % This approach extends the set of sensitive words to include additional, realistic terms that were not originally identified but are still sensitive.
 % This way we extend the set of sensitive words obtaining a more comprehensive and realistic set containing words which were not in the original set but are sensitive nevertheless.
-In contrast, SanText and CusText recognizing the limitations of a restricted set of sensitive words, attempt to mitigate this by allowing replacements with non-sensitive words. 
+In contrast, SanText and CusText recognizing the limitations of a restricted set of sensitive tokens, attempt to mitigate this by allowing replacements with non-sensitive words. 
 However, this method often leads to replacements that do not always make sense. 
 For example, replacing ``Sinn Fein headquarters'' with a non-sensitive word, such as ``Irish'' 
 % (which happens to be an adjective rather than noun clause) 
@@ -565,16 +568,19 @@ We show partial experimental results, in Figures~\ref{fig:semsim_2}, \ref{fig:pe
 and full results in Figures~\ref{fig:semsim}, \ref{fig:perplexity}, \ref{fig:grammar}, \ref{fig:common_sense}, \ref{fig:coherence}, \ref{fig:cohesiveness} in the Appendix. 
 The figures show improvements achieved by \clusant in terms of semantic similarity, perplexity, common sense, coherence, cohesiveness, and grammar over SanText. 
 For all metrics except perplexity, higher scores are better, while for perplexity, lower scores are preferred.
-We abbreviate \clusant by CST and CusText by CT. We consider CT and a special version of \clusant where $k=\infty$.
+We abbreviate \clusant by CST and CusText by CT. 
+We consider CT as a special version of \clusant where $k=\infty$.
 
-We plotted the number of clusters on the vertical axis and the centroid pushing factor $k$ of \clusant on the horizontal axis, creating heatmaps for each $\epsilon$ value considered: 0.5, 1, 2, 4, 8, 16. Due to space constraints, we only show results for $\epsilon=1$ and $\epsilon=8$ here and include the rest in the Appendix. For all $\epsilon$ values, as $k$ increases (moving right in the maps), the semantic similarity improvement (over SanText) increases. Additionally, as the number of clusters increases (moving down), semantic similarity improvement also increases.
+We plotted the number of clusters on the vertical axis and the centroid pushing factor $k$ of \clusant on the horizontal axis, creating heatmaps for each $\epsilon$ value considered: 0.5, 1, 2, 4, 8, 16. Due to space constraints, we only show results for $\epsilon=1$ and $\epsilon=8$ here and include the rest in the Appendix. 
+
+For all $\epsilon$ values, as $k$ increases (moving right in the maps), the semantic similarity improvement (over SanText) increases. Additionally, as the number of clusters increases (moving down), semantic similarity improvement also increases.
 
 The most significant improvement of \clusant over SanText is observed for $\epsilon = 8$ and 720 clusters. Generally, the more clusters used, the greater the improvement over SanText. For $\epsilon = 16$, the improvement in semantic similarity for \clusant over SanText is not as pronounced as for $\epsilon = 8$. This is because, while the semantic similarity of sanitized text to the original text for \clusant approaches 1 for this $\epsilon$ (the highest value possible, being a cosine similarity), the semantic similarity for SanText also increases for larger $\epsilon$ values, resulting in a slightly reduced improvement margin.
 
 \looseness=-1
 Similar trends are observed for perplexity, common sense, and coherence, as well as for grammar and cohesiveness (detailed in Appendix). As the number of clusters and $k$ increase, \clusant's performance improves significantly over SanText, approaching that of CusText. While CusText shows better performance across metrics, it is only marginally better than \clusant. However, this comes at the cost of weaker privacy guarantees.
 % , as explained previously.
-We note that these metrics represent general trends; as LLM judgments can be noisy, smaller $k$ values occasionally yield better results.
+We note that these metrics represent general trends; as LLM judgments can be noisy, smaller $k$ values may occasionally yield better results.
 
 
 
@@ -618,8 +624,12 @@ offering a robust, tuneable solution for handling sensitive text. % across diver
 \begin{itemize}
 \setlength\itemsep{0em}
     \item We inherit some limitations of SanText/CusText. In particular, sanitizing a text by sanitizing individual tokens can lead to mistakes. For example, when a token has two different meanings in different contexts, the token sanitization may not know which meaning it should take. 
-    While we use a sentence embedder that generates different embeddings for `London, Ontario' and `London, England,' it is not helpful for distinguishing `Jordan' as a country from the name `Jordan.' To achieve this, the embedder would need to consider the meaning of the entire passage. However, the details of how to accomplish this are far from obvious. We believe that our framework can be improved in follow-up works by considering token context in our clustering and text sanitization.
+    While we use a sentence embedder that generates different embeddings for `London, Ontario' and `London, England,' it is not helpful for distinguishing `Jordan' as a country from the name `Jordan.' 
+    To achieve this, the embedder would need to consider the meaning of the entire passage. 
+    However, accomplishing this is challenging and requires further work. We believe our framework can be improved in follow-up studies by considering token context in our clustering and text sanitization.
     
+    % While we attempt to remedy this by creating a sensible prompt when generating the augmented set $X'$ of sensitive tokens (in the Appendix), the full details of how to accomplish this remain far from obvious. 
+
     \item While we improved the sensitive token set and multi-word embedding in our framework, we tested only one clustering method (that of CusText's) and primarily used Euclidean distances. A future direction is to enrich our framework by exploring and comparing other clustering methods and distance metrics. 
 
     % (in line with SanText/CusText). 

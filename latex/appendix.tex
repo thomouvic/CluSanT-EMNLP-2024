@@ -46,14 +46,44 @@ We present the proof that CusText cannot achieve standard (M)LDP when there is m
 
 \section{Detailed Experimental Results}
 
-Here we give detailed experimental results on 
+Here we give the detailed prompt for obtaining the extended set $X'$ of sensitive tokens using GPT-4o.
+
+{\em
+\begin{quote}
+If I give you a word or phrase, example ``southern norrland,'' can you give me 100 similar words/phrases of the same category?
+
+For example:
+\begin{itemize}
+    \item If it is a location, give me other locations that are similar in nature.
+    \item If it is an organization, give me other organizations that are similar.
+    \item If it is an object, give me other objects that are similar.
+\end{itemize}
+
+The similarity should be in terms of the category and characteristics of the entity. The words you give should make sense if used as a replacement for the original word/phrase in a similar context.
+
+Format output as a list of words/phrases:
+\[
+[\text{word/phrase1, word/phrase2, ...}]
+\]
+
+Here the context that "\{search\_phrase\}" was used in: "\{context\}".
+\end{quote}
+}
+
+
+For example, when the search phrase was `sarpsborg city court (tingrett)' with its context in the TAB text, the output we received from GPT-4o was:
+
+[`oslo district court', `bergen district court', `trondheim district court', `stavanger district court', `kristiansand district court', `tromsø district court', `drammen district court', `fredrikstad district court', `skien district court', `ålesund district court', `bodø district court', `hamar district court', `molde district court', `haugesund district court', etc].
+
+
+Now we give detailed experimental results on 
 semantic similarity (Figure~\ref{fig:semsim}),
 perplexity (Figure~\ref{fig:perplexity}),
 grammar (Figure~\ref{fig:grammar}),
 common sense (Figure~\ref{fig:common_sense}), 
 coherence (Figure~\ref{fig:coherence}), and 
 cohesiveness (Figure~\ref{fig:cohesiveness}).
-For perplexity we used GPT-2. To judge the grammar, common sense, coherence, and cohesiveness of santized text, used GPT-4o, with the following prompt. 
+For perplexity we used GPT-2. To judge the grammar, common sense, coherence, and cohesiveness of santized text, we used GPT-4o, with the following prompt. 
 
 
 {\em
@@ -71,6 +101,11 @@ You should score based on these criteria:
 Please ONLY respond in JSON format with the four keys 'grammar', 'common sense', 'coherence', and 'cohesiveness', each with a score attached to them.
 \end{quote}
 }
+
+
+CluSanT's improvement over SanText generally increases with the number of clusters used. Increasing the number of clusters and parameter \(k\) significantly enhances CluSanT’s performance, approaching that of CusText. Although CusText performs better across metrics, it offers weaker privacy guarantees. Note that these metrics represent general trends, and due to noisy judgments from LLMs, smaller \(k\) values can sometimes yield better results.
+
+
 
 \begin{figure*}
     \centering
